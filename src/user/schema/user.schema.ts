@@ -33,6 +33,9 @@ export class User extends Document {
 
   @Prop({ required: true, default: false })
   is_deleted: boolean;
+
+  @Prop({ required: true, default: false })
+  is_deactivated: boolean;
 }
 
 export const user_schema = SchemaFactory.createForClass(User);
