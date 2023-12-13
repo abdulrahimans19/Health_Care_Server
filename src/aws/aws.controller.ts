@@ -6,9 +6,8 @@ import { Public } from 'src/shared/decorators';
 export class AwsController {
   constructor(private readonly awsService: AwsService) {}
 
-  
-  @Get('presigned-url')
-  async getPresignedUrl(): Promise<{
+  @Get('generate-presigned-url')
+  async generatePresignedUrl(): Promise<{
     presignedUrl: string;
     publicUrl: string;
   }> {
@@ -18,8 +17,8 @@ export class AwsController {
   }
 
   @Public()
-  @Get('presigned-url-for-profile-image')
-  async getPresignedUrlForProfileImage(
+  @Get('profile-image-presigned-url')
+  async getProfileImagePresignedUrl(
     @Query('id') id: string,
   ): Promise<{ presignedUrl: string; publicUrl: string }> {
     const { presignedUrl, publicUrl } =
