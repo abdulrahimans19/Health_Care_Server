@@ -19,7 +19,7 @@ export class UserProfile extends Document {
   @Prop()
   first_name: string;
 
-  @Prop()
+  @Prop({ default: null })
   middle_name: string;
 
   @Prop()
