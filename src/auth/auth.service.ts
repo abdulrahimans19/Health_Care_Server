@@ -41,7 +41,7 @@ export class AuthService {
   async signIn(signInDto: SignInDto) {
     const user = await this.userService.signIn(signInDto);
     const tokens = await this.getTokens(user._id.toString(), user.email);
-    return tokens;
+    return { tokens };
   }
 
   async signUp(signUpDto: SignUpDto) {
@@ -80,14 +80,17 @@ export class AuthService {
     }
 
     await this.userService.updatePassword(email, password);
-    const tokens = await this.getTokens(user._id, user.email);
-    return tokens;
+
+    return {
+      message:
+        "Password reset successfull, You'll be redirected to the login screen now",
+    };
   }
 
   async verifyEmail(email: string, otp: string) {
     const user = await this.userService.verifyEmailOtp(email, otp);
     const tokens = await this.getTokens(user._id.toString(), user.email);
-    return tokens;
+    return { tokens };
   }
 
   async resendOtp(email: string) {

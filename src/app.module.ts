@@ -11,6 +11,7 @@ import { join } from 'path';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { AwsModule } from './aws/aws.module';
+import { UserProfileModule } from './user-profile/user-profile.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { AwsModule } from './aws/aws.module';
     UserModule,
     AuthModule,
     AwsModule,
+    UserProfileModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: AtGuard }],
