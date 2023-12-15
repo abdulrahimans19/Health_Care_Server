@@ -16,7 +16,6 @@ export class AwsController {
     return { presignedUrl, publicUrl };
   }
 
-  @Public()
   @Get('profile-image-presigned-url')
   async getProfileImagePresignedUrl(
     @Query('id') id: string,
