@@ -12,6 +12,11 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { AwsModule } from './aws/aws.module';
 import { UserProfileModule } from './user-profile/user-profile.module';
+import { MainCategoriesModule } from './e-commerce/main-categories/main-categories.module';
+import { SubCategoriesModule } from './e-commerce/sub-categories/sub-categories.module';
+import { ProductModule } from './e-commerce/product/product.module';
+import { FavouritesModule } from './e-commerce/favourites/favourites.module';
+import { CartModule } from './e-commerce/cart/cart.module';
 
 @Module({
   imports: [
@@ -34,6 +39,11 @@ import { UserProfileModule } from './user-profile/user-profile.module';
     AuthModule,
     AwsModule,
     UserProfileModule,
+    MainCategoriesModule,
+    SubCategoriesModule,
+    ProductModule,
+    FavouritesModule,
+    CartModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: AtGuard }],
