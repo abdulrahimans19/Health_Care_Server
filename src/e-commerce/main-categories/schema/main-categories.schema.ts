@@ -12,6 +12,9 @@ export class MainCategories extends Document {
   title: string;
 
   @Prop()
+  description: string;
+
+  @Prop()
   image: string;
 
   @Prop()

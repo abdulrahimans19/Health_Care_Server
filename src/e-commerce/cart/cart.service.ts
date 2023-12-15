@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Cart } from './schema/cart.schema';
@@ -7,7 +11,7 @@ import { product_types } from '../types';
 import {
   calculateTotalPriceFoodCart,
   calculateTotalPricePharmaCart,
-} from './utils/utils';
+} from '../utils/utils';
 
 @Injectable()
 export class CartService {
@@ -90,7 +94,11 @@ export class CartService {
     return cart;
   }
 
-  private async updateCartWithProduct(profile_id: string, product_id: string, quantityChange: number) {
+  private async updateCartWithProduct(
+    profile_id: string,
+    product_id: string,
+    quantityChange: number,
+  ) {
     const cart = await this.cartModel.findOne({ profile_id });
     const product = await this.productModel.findOne({ _id: product_id });
 
@@ -98,7 +106,10 @@ export class CartService {
       throw new NotFoundException('Product not found.');
     }
 
-    const updateField = product.product_type === product_types.FOOD ? 'food_products' : 'pharma_products';
+    const updateField =
+      product.product_type === product_types.FOOD
+        ? 'food_products'
+        : 'pharma_products';
 
     const existingProductIndex = cart[updateField].findIndex(
       (item) => item.product.toHexString() === product_id,
@@ -106,10 +117,13 @@ export class CartService {
 
     if (existingProductIndex !== -1) {
       // Product already exists in the cart, check quantity
-      const newQuantity = cart[updateField][existingProductIndex].quantity + quantityChange;
+      const newQuantity =
+        cart[updateField][existingProductIndex].quantity + quantityChange;
 
       if (newQuantity < 0 || newQuantity > product.quantity) {
-        throw new BadRequestException(`Invalid quantity. Available: ${product.quantity}`);
+        throw new BadRequestException(
+          `Invalid quantity. Available: ${product.quantity}`,
+        );
       }
 
       // Update quantity

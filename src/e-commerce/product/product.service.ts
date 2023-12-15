@@ -12,9 +12,10 @@ export class ProductService {
   ) {}
 
   async getProducts(product_type: product_types) {
-    return await this.productModel
+    const products = await this.productModel
       .find({ product_type: product_type })
       .sort({ created_at: -1 });
+    return { products };
   }
 
   async createProduct(dto: CreateProductDto, product_types: product_types) {

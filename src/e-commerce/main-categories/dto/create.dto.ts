@@ -7,5 +7,9 @@ export class CreateMainCategoryDto {
 
   @IsNotEmpty()
   @IsString()
+  description: string;
+
+  @IsNotEmpty()
+  @IsString()
   image: string;
 }

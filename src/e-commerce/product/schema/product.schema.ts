@@ -34,6 +34,12 @@ export class Product extends Document {
   @Prop({ type: SchemaTypes.ObjectId, ref: SubCategories.name })
   sub_category_id: Types.ObjectId;
 
+  @Prop({ type: [{ type: SchemaTypes.ObjectId, ref: 'Review' }], default: [] })
+  reviews: Types.ObjectId[];
+
+  @Prop({ default: 0 })
+  averageRating: number;
+
   @Prop({ default: false })
   is_deleted: boolean;
 

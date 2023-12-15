@@ -17,6 +17,8 @@ import { SubCategoriesModule } from './e-commerce/sub-categories/sub-categories.
 import { ProductModule } from './e-commerce/product/product.module';
 import { FavouritesModule } from './e-commerce/favourites/favourites.module';
 import { CartModule } from './e-commerce/cart/cart.module';
+import { AddressModule } from './e-commerce/address/address.module';
+import { ReviewModule } from './e-commerce/review/review.module';
 
 @Module({
   imports: [
@@ -44,6 +46,8 @@ import { CartModule } from './e-commerce/cart/cart.module';
     ProductModule,
     FavouritesModule,
     CartModule,
+    AddressModule,
+    ReviewModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: AtGuard }],

@@ -7,6 +7,10 @@ export class UpdateMainCategoryDto {
 
   @IsNotEmpty()
   @IsString()
+  description: string;
+
+  @IsNotEmpty()
+  @IsString()
   title: string;
 
   @IsNotEmpty()

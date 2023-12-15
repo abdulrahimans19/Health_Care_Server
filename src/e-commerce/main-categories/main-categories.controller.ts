@@ -1,7 +1,6 @@
 import { Body, Controller, Get, Post, Put } from '@nestjs/common';
 import { MainCategoriesService } from './main-categories.service';
 import { product_types } from '../types';
-import { create } from 'domain';
 import { CreateMainCategoryDto, UpdateMainCategoryDto } from './dto';
 
 @Controller('main-categories')
@@ -17,8 +16,13 @@ export class MainCategoriesController {
 
   @Get('/food')
   getAllFoodCategories() {
+    return this.mainCategoryService.getAllCategoriesByType(product_types.FOOD);
+  }
+
+  @Get('/doctor')
+  getAllDoctorCategories() {
     return this.mainCategoryService.getAllCategoriesByType(
-      product_types.FOOD,
+      product_types.DOCTOR,
     );
   }
 
@@ -32,9 +36,14 @@ export class MainCategoriesController {
 
   @Post('/food/create')
   createFoodCategory(@Body() dto: CreateMainCategoryDto) {
+    return this.mainCategoryService.createMainCategory(dto, product_types.FOOD);
+  }
+
+  @Post('/doctor/create')
+  createDoctorCategory(@Body() dto: CreateMainCategoryDto) {
     return this.mainCategoryService.createMainCategory(
       dto,
-      product_types.FOOD,
+      product_types.DOCTOR,
     );
   }
 
@@ -45,6 +54,11 @@ export class MainCategoriesController {
 
   @Put('/food/update')
   updateFoodCategory(@Body() dto: UpdateMainCategoryDto) {
+    return this.mainCategoryService.updateMainCategory(dto);
+  }
+
+  @Put('/doctor/update')
+  updateDoctorCategory(@Body() dto: UpdateMainCategoryDto) {
     return this.mainCategoryService.updateMainCategory(dto);
   }
 }

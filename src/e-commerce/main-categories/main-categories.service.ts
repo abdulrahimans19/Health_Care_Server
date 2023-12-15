@@ -20,10 +20,14 @@ export class MainCategoriesService {
     return { mainCategories };
   }
 
-  async createMainCategory(dto: CreateMainCategoryDto, eCommerceType: product_types) {
+  async createMainCategory(
+    dto: CreateMainCategoryDto,
+    eCommerceType: product_types,
+  ) {
     await this.mainCategoryModel.create({
       title: dto.title,
       image: dto.image,
+      description: dto.description,
       product_type: eCommerceType,
     });
 
@@ -33,7 +37,13 @@ export class MainCategoriesService {
   async updateMainCategory(dto: UpdateMainCategoryDto) {
     await this.mainCategoryModel.updateOne(
       { _id: dto.category_id },
-      { $set: { title: dto.title, image: dto.image } },
+      {
+        $set: {
+          title: dto.title,
+          image: dto.image,
+          description: dto.description,
+        },
+      },
     );
 
     return { message: 'Main Category updated.' };
