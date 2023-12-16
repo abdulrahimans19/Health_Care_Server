@@ -30,18 +30,25 @@ class CalculateTotalPriceResponseDTO {
 
 export function calculateTotalPrice(products): number {
   return products.reduce((total, item) => {
-    const priceToUse = item.product.offer_price !== 0 ? item.product.offer_price : item.product.price;
+    const priceToUse =
+      item.product.offer_price !== 0
+        ? item.product.offer_price
+        : item.product.price;
     return total + priceToUse * item.quantity;
   }, 0);
 }
 
-function calculateProductTotalPrice(product): number {
-  const priceToUse = product.offer_price !== 0 ? product.offer_price : product.price;
-  return priceToUse * product.quantity;
+function calculateProductTotalPrice(product, quantity): number {
+  const priceToUse =
+    product.offer_price !== 0 ? product.offer_price : product.price;
+  return priceToUse * quantity;
 }
 
-function mapToProductWithTotalPriceDTO(item): ProductWithTotalPriceDTO {
-  const totalProductPrice = calculateProductTotalPrice(item.product);
+function mapToProductWithTotalPriceDTO(
+  item,
+  quantity,
+): ProductWithTotalPriceDTO {
+  const totalProductPrice = calculateProductTotalPrice(item.product, quantity);
 
   return {
     ...item.toObject(),
@@ -49,16 +56,26 @@ function mapToProductWithTotalPriceDTO(item): ProductWithTotalPriceDTO {
   };
 }
 
-export const calculateTotalPricePharmaCart = (cart): CalculateTotalPriceResponseDTO => {
+export const calculateTotalPricePharmaCart = (
+  cart,
+): CalculateTotalPriceResponseDTO => {
   const totalPrice = calculateTotalPrice(cart.pharma_products);
-  const products_with_total_price: ProductWithTotalPriceDTO[] = cart.pharma_products.map(mapToProductWithTotalPriceDTO);
+  const products_with_total_price: ProductWithTotalPriceDTO[] =
+    cart.pharma_products.map((item) =>
+      mapToProductWithTotalPriceDTO(item, item.quantity),
+    );
 
   return { totalPrice, products_with_total_price };
 };
 
-export const calculateTotalPriceFoodCart = (cart): CalculateTotalPriceResponseDTO => {
+export const calculateTotalPriceFoodCart = (
+  cart,
+): CalculateTotalPriceResponseDTO => {
   const totalPrice = calculateTotalPrice(cart.food_products);
-  const products_with_total_price: ProductWithTotalPriceDTO[] = cart.food_products.map(mapToProductWithTotalPriceDTO);
+  const products_with_total_price: ProductWithTotalPriceDTO[] =
+    cart.food_products.map((item) =>
+      mapToProductWithTotalPriceDTO(item, item.quantity),
+    );
 
   return { totalPrice, products_with_total_price };
 };
