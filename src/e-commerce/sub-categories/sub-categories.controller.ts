@@ -1,6 +1,17 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { SubCategoriesService } from './sub-categories.service';
 import { CreateSubCategoryDto, UpdateSubCategoryDto } from './dto';
+import { RoleGuard } from 'src/shared/guards';
+import { UserRoles } from 'src/user/schema/user.schema';
+import { Roles } from 'src/shared/decorators';
 
 @Controller('sub-categories')
 export class SubCategoriesController {
@@ -14,11 +25,15 @@ export class SubCategoriesController {
   }
 
   @Post('/create')
+  @Roles(UserRoles.ADMIN)
+  @UseGuards(RoleGuard)
   createSubCategory(@Body() createSubCategoryDto: CreateSubCategoryDto) {
     return this.subCategoriesService.createSubCategory(createSubCategoryDto);
   }
 
   @Put('/update')
+  @Roles(UserRoles.ADMIN)
+  @UseGuards(RoleGuard)
   updateSubCategory(@Body() updateSubCategoryDto: UpdateSubCategoryDto) {
     return this.subCategoriesService.updateSubCategory(updateSubCategoryDto);
   }

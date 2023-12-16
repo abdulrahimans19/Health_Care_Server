@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { UserProfileService } from './user-profile.service';
 import { GetUser } from 'src/shared/decorators';
 import {
@@ -7,6 +15,7 @@ import {
   UpdateProfileImageDto,
 } from './dto';
 import { JwtPayload } from 'src/auth/strategies';
+import { ProfileGuard } from 'src/shared/guards';
 
 @Controller('user-profile')
 export class UserProfileController {
@@ -31,6 +40,7 @@ export class UserProfileController {
   }
 
   @Put('update')
+  @UseGuards(ProfileGuard)
   updateProfile(@Body() updateProfileDto: UpdateProfileDto) {
     return this.userProfileService.updateProfile(updateProfileDto);
   }

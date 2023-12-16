@@ -19,6 +19,8 @@ import { FavouritesModule } from './e-commerce/favourites/favourites.module';
 import { CartModule } from './e-commerce/cart/cart.module';
 import { AddressModule } from './e-commerce/address/address.module';
 import { ReviewModule } from './e-commerce/review/review.module';
+import { CouponModule } from './e-commerce/coupon/coupon.module';
+import { OrderModule } from './e-commerce/order/order.module';
 
 @Module({
   imports: [
@@ -48,6 +50,8 @@ import { ReviewModule } from './e-commerce/review/review.module';
     CartModule,
     AddressModule,
     ReviewModule,
+    CouponModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: AtGuard }],
