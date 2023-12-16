@@ -9,6 +9,18 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
 import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
+import { AwsModule } from './aws/aws.module';
+import { UserProfileModule } from './user-profile/user-profile.module';
+import { MainCategoriesModule } from './e-commerce/main-categories/main-categories.module';
+import { SubCategoriesModule } from './e-commerce/sub-categories/sub-categories.module';
+import { ProductModule } from './e-commerce/product/product.module';
+import { FavouritesModule } from './e-commerce/favourites/favourites.module';
+import { CartModule } from './e-commerce/cart/cart.module';
+import { AddressModule } from './e-commerce/address/address.module';
+import { ReviewModule } from './e-commerce/review/review.module';
+import { CouponModule } from './e-commerce/coupon/coupon.module';
+import { OrderModule } from './e-commerce/order/order.module';
 
 @Module({
   imports: [
@@ -28,6 +40,18 @@ import { UserModule } from './user/user.module';
       },
     }),
     UserModule,
+    AuthModule,
+    AwsModule,
+    UserProfileModule,
+    MainCategoriesModule,
+    SubCategoriesModule,
+    ProductModule,
+    FavouritesModule,
+    CartModule,
+    AddressModule,
+    ReviewModule,
+    CouponModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: AtGuard }],

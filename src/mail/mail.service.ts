@@ -5,7 +5,7 @@ import { Injectable } from '@nestjs/common';
 export class MailService {
   constructor(private readonly mailService: MailerService) {}
 
-  async verfiyEmailOTP(email: string, otp: string) {
+  async sendEmailOtpForVerification(email: string, otp: string) {
     const noReplyEmail = `no-reply@${process.env.NODEMAILER_USERNAME}`; // Set the no-reply email address
     await this.mailService.sendMail({
       to: email,
@@ -14,10 +14,10 @@ export class MailService {
       template: 'register-otp',
       context: { otp },
     });
-    return { message: 'Otp has been send successfully to your email address' };
+    return { message: 'Otp has been send to your email address.' };
   }
 
-  async sendEmailOTP(email: string, otp: string) {
+  async sendEmailOtpForPasswordReset(email: string, otp: string) {
     const noReplyEmail = `no-reply@${process.env.NODEMAILER_USERNAME}`; // Set the no-reply email address
     await this.mailService.sendMail({
       to: email,
@@ -26,6 +26,6 @@ export class MailService {
       template: 'password-reset',
       context: { otp },
     });
-    return { message: 'Otp has been send successfully to your email address' };
+    return { message: 'Otp has been send to your email address.' };
   }
 }
