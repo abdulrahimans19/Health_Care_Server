@@ -19,6 +19,10 @@ import { FavouritesModule } from './e-commerce/favourites/favourites.module';
 import { CartModule } from './e-commerce/cart/cart.module';
 import { AddressModule } from './e-commerce/address/address.module';
 import { ReviewModule } from './e-commerce/review/review.module';
+import { PostModule } from './community/post/post.module';
+import { CommentsController } from './community/comments/comments.controller';
+import { CommentsService } from './community/comments/comments.service';
+import { CommentsModule } from './community/comments/comments.module';
 
 @Module({
   imports: [
@@ -48,8 +52,10 @@ import { ReviewModule } from './e-commerce/review/review.module';
     CartModule,
     AddressModule,
     ReviewModule,
+    PostModule,
+    CommentsModule,
   ],
-  controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: AtGuard }],
+  controllers: [AppController, CommentsController],
+  providers: [AppService, { provide: APP_GUARD, useClass: AtGuard }, CommentsService],
 })
 export class AppModule {}
