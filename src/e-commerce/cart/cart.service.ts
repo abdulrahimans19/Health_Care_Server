@@ -134,6 +134,10 @@ export class CartService {
         cart[updateField].splice(existingProductIndex, 1);
       }
     } else {
+      if (product.quantity < 1)
+        throw new BadRequestException(
+          `Invalid quantity. Available: ${product.quantity}`,
+        );
       // Product does not exist in the cart, add it
       cart[updateField].push({
         product: new Types.ObjectId(product_id),

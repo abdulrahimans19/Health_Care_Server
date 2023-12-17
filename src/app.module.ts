@@ -23,6 +23,8 @@ import { PostModule } from './community/post/post.module';
 import { CommentsController } from './community/comments/comments.controller';
 import { CommentsService } from './community/comments/comments.service';
 import { CommentsModule } from './community/comments/comments.module';
+import { CouponModule } from './e-commerce/coupon/coupon.module';
+import { OrderModule } from './e-commerce/order/order.module';
 
 @Module({
   imports: [
@@ -54,6 +56,8 @@ import { CommentsModule } from './community/comments/comments.module';
     ReviewModule,
     PostModule,
     CommentsModule,
+    CouponModule,
+    OrderModule,
   ],
   controllers: [AppController, CommentsController],
   providers: [AppService, { provide: APP_GUARD, useClass: AtGuard }, CommentsService],
