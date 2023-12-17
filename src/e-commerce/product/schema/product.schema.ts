@@ -28,8 +28,11 @@ export class Product extends Document {
   @Prop({ default: 0 })
   quantity: number;
 
-  @Prop()
+  @Prop({ default: 0 })
   product_sold: number;
+
+  @Prop({ default: 0 })
+  review_count: number;
 
   @Prop({ type: SchemaTypes.ObjectId, ref: SubCategories.name })
   sub_category_id: Types.ObjectId;

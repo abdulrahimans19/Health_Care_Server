@@ -14,8 +14,8 @@ export class Coupon extends Document {
   @Prop()
   min_amount: number;
 
-  @Prop({ type: SchemaTypes.ObjectId, ref: User.name})
-  used_id: Types.ObjectId[];
+  @Prop({ type: SchemaTypes.ObjectId, ref: User.name })
+  user_id: Types.ObjectId[];
 
   @Prop({ default: true })
   is_active: boolean;

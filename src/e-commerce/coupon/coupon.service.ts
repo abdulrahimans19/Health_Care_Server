@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Coupon } from './schema/coupon.schema';
 import { Model } from 'mongoose';
-import { CreateCouponDto, UpdateCouponDto } from './dto';
+import { ApplyCouponDto, CreateCouponDto, UpdateCouponDto } from './dto';
 import { JwtPayload } from 'src/auth/strategies';
 
 @Injectable()
@@ -20,7 +20,7 @@ export class CouponService {
     const currentDate = new Date();
     const coupons = await this.couponModel
       .find({
-        used_id: { $nin: [user.sub] },
+        user_id: { $nin: [user.sub] },
         expiry_date: { $gt: currentDate },
       })
       .sort({ created_at: -1 })
@@ -54,5 +54,27 @@ export class CouponService {
     );
 
     return { message: 'Coupon Updated.' };
+  }
+
+  async applyCoupon(user: JwtPayload, dto: ApplyCouponDto) {
+    const currentDate = new Date();
+    const coupon = await this.couponModel.findOne({
+      code: dto.code,
+      user_id: { $nin: [user.sub] },
+      expiry_date: { $gt: currentDate },
+    });
+
+    if (!coupon) {
+      throw new ConflictException('Invalid Coupon.');
+    }
+
+    if (coupon.min_amount > dto.amount) {
+      throw new ConflictException(
+        `Minimum coupon amount is ${coupon.min_amount}`,
+      );
+    }
+
+    const discountAmount = (dto.amount * coupon.discount_percentage) / 100;
+    return { discountAmount };
   }
 }

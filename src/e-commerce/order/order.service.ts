@@ -1,62 +1,227 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Order } from './schema/order.schema';
-import { Model } from 'mongoose';
+import { Model, Types, ClientSession } from 'mongoose';
+import { Order, OrderStatus } from './schema/order.schema';
 import { Cart } from '../cart/schema/cart.schema';
 import { CartCheckoutDto } from './dto';
 import { calculateTotalPrice } from '../utils/utils';
 import { product_types } from '../types';
+import { Coupon } from '../coupon/schema/coupon.schema';
+import { JwtPayload } from 'src/auth/strategies';
 
 @Injectable()
 export class OrderService {
   constructor(
     @InjectModel(Order.name) private readonly orderModel: Model<Order>,
     @InjectModel(Cart.name) private readonly cartModel: Model<Cart>,
-  ) { }
+    @InjectModel(Coupon.name) private readonly couponModel: Model<Coupon>,
+  ) {}
 
-  async getProfileOrder(profile_id: string, product_type: product_types) {
-    return await this.orderModel
-      .find({ profile_id, product_type })
+  async getProfileOrder(
+    profile_id: string,
+    product_type: product_types,
+    payment_status: string,
+  ) {
+    return this.orderModel
+      .find({ profile_id, product_type, order_status: payment_status })
       .populate({
-        path: 'products.product',
+        path: 'product_id',
         model: 'Product',
       })
       .populate({
         path: 'address_id',
         model: 'Address',
       })
+      .populate({
+        path: 'review_id',
+        model: 'Review',
+      })
       .sort({ created_at: -1 });
   }
 
-  async pharmaCartCheckout(profile_id: string, dto: CartCheckoutDto) {
-    const cart: any = await this.cartModel
-      .findOne({ profile_id: profile_id })
-      .populate({
-        path: 'pharma_products.product',
+  private async checkout(
+    profile_id: string,
+    user: JwtPayload,
+    dto: CartCheckoutDto,
+    product_type: product_types,
+    cartField: string,
+  ) {
+    const session = await this.orderModel.startSession();
+    session.startTransaction();
+
+    try {
+      const cart: any = await this.cartModel.findOne({ profile_id }).populate({
+        path: `${cartField}.product`,
+        model: 'Product',
       });
-    if (!cart || cart.pharma_products.length === 0) {
-      throw new NotFoundException('Cart is empty');
+
+      if (!cart || cart[cartField].length === 0) {
+        throw new NotFoundException('Cart is empty');
+      }
+
+      for (const cartProduct of cart[cartField]) {
+        if (cartProduct.quantity > cartProduct.product.quantity) {
+          throw new ConflictException(
+            `Insufficient stock for product ${cartProduct.product.name}`,
+          );
+        }
+      }
+
+      let total_amount = calculateTotalPrice(cart[cartField]);
+      let coupon_exist: Coupon;
+      let discountPercentage: number;
+
+      if (dto.coupon) {
+        const currentDate = new Date();
+        coupon_exist = await this.couponModel.findOne({
+          code: dto.coupon,
+          user_id: { $nin: [user.sub] },
+          expiry_date: { $gt: currentDate },
+        });
+
+        if (!coupon_exist) {
+          throw new ConflictException('Invalid Coupon');
+        }
+
+        if (total_amount < coupon_exist.min_amount) {
+          throw new ConflictException(
+            `Min order amount is ${coupon_exist.min_amount}`,
+          );
+        }
+
+        discountPercentage = coupon_exist.discount_percentage || 0;
+
+        const orderPromises = cart[cartField].map(async (cartProduct) => {
+          const productTotalAmount =
+            cartProduct.quantity * cartProduct.product.price;
+          const discountAmount =
+            (productTotalAmount * discountPercentage) / 100;
+
+          total_amount -= discountAmount;
+
+          const realTotalAmount = productTotalAmount;
+          const discountedAmount = productTotalAmount - discountAmount;
+
+          cartProduct.product.quantity -= cartProduct.quantity;
+          cartProduct.product.product_sold += cartProduct.quantity;
+          await cartProduct.product.save();
+
+          return this.orderModel.create(
+            [
+              {
+                profile_id,
+                product_id: cartProduct.product._id,
+                quantity: cartProduct.quantity,
+                total_amount: discountedAmount,
+                real_total_amount: realTotalAmount,
+                discounted_amount: discountAmount,
+                address_id: dto.address_id,
+                order_status: OrderStatus.CREATED,
+                product_type,
+              },
+            ],
+            { session } as { session: ClientSession },
+          );
+        });
+
+        const orders = await Promise.all(orderPromises);
+
+        total_amount = calculateTotalPrice(cart[cartField]);
+        const discountAmount = (total_amount * discountPercentage) / 100;
+        total_amount = total_amount - discountAmount;
+
+        await this.couponModel.updateOne(
+          { code: dto.coupon },
+          { $push: { user_id: new Types.ObjectId(user.sub) } },
+          { session } as { session: ClientSession },
+        );
+
+        await session.commitTransaction();
+        session.endSession();
+
+        return { message: 'Order created.', orders, total_amount };
+      } else {
+        const orderPromises = cart[cartField].map(async (cartProduct) => {
+          const totalAmount = cartProduct.quantity * cartProduct.product.price;
+
+          const realTotalAmount = totalAmount;
+          const discountedAmount = totalAmount;
+
+          cartProduct.product.quantity -= cartProduct.quantity;
+          cartProduct.product.product_sold += cartProduct.quantity;
+          await cartProduct.product.save();
+
+          return this.orderModel.create(
+            [
+              {
+                profile_id,
+                product_id: cartProduct.product._id,
+                quantity: cartProduct.quantity,
+                total_amount: discountedAmount,
+                real_total_amount: realTotalAmount,
+                discounted_amount: discountedAmount,
+                address_id: dto.address_id,
+                order_status: OrderStatus.CREATED,
+                product_type,
+              },
+            ],
+            { session } as { session: ClientSession },
+          );
+        });
+
+        const orders = await Promise.all(orderPromises);
+
+        total_amount = calculateTotalPrice(cart[cartField]);
+        const discountAmount = 0;
+        total_amount = total_amount - discountAmount;
+
+        await session.commitTransaction();
+        session.endSession();
+
+        return { message: 'Order created.', orders, total_amount };
+      }
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      console.error(error);
+      throw error;
     }
+  }
 
-    const productsForOrder = cart.pharma_products.map((cartProduct) => ({
-      product: cartProduct.product._id,
-      quantity: cartProduct.quantity,
-      price:
-        cartProduct.product.offer_price === 0
-          ? cartProduct.product.price
-          : cartProduct.product.offer_price,
-    }));
+  async pharmaCartCheckout(
+    profile_id: string,
+    user: JwtPayload,
+    dto: CartCheckoutDto,
+  ) {
+    try {
+      return this.checkout(
+        profile_id,
+        user,
+        dto,
+        product_types.PHARMA,
+        'pharma_products',
+      );
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
 
-    const total_amount = calculateTotalPrice(cart.pharma_products);
-
-    const order = await this.orderModel.create({
-      products: productsForOrder,
+  async foodCartCheckout(
+    profile_id: string,
+    user: JwtPayload,
+    dto: CartCheckoutDto,
+  ) {
+    return this.checkout(
       profile_id,
-      total_amount,
-      address_id: dto.address_id,
-      product_type: product_types.PHARMA,
-    });
-
-    return { message: 'Order created.' };
+      user,
+      dto,
+      product_types.FOOD,
+      'food_products',
+    );
   }
 }
