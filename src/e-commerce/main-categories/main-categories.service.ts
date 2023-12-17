@@ -10,7 +10,7 @@ export class MainCategoriesService {
   constructor(
     @InjectModel(MainCategories.name)
     private readonly mainCategoryModel: Model<MainCategories>,
-  ) {}
+  ) { }
 
   async getAllCategoriesByType(eCommerceType: product_types) {
     const mainCategories = await this.mainCategoryModel.find({
@@ -18,6 +18,10 @@ export class MainCategoriesService {
     });
 
     return { mainCategories };
+  }
+
+  async getSingleCategory(id: string) {
+    return await this.mainCategoryModel.findOne({ _id: id });
   }
 
   async createMainCategory(

@@ -1,9 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, SchemaTypes, Types } from 'mongoose';
+import { UserProfile } from 'src/user-profile/schema/user-profile.schema';
 
 @Schema()
 export class Address extends Document {
-  @Prop({ schema: SchemaTypes.ObjectId })
+  @Prop({ schema: SchemaTypes.ObjectId, ref: UserProfile.name, index: true })
   profile_id: Types.ObjectId;
 
   @Prop()

@@ -33,6 +33,10 @@ export class UpdateProductDto {
 
   @IsOptional()
   @IsNumber()
+  quantity: number;
+
+  @IsOptional()
+  @IsNumber()
   offer_price: number;
 
   @IsNotEmpty()

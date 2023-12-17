@@ -2,7 +2,7 @@ import { Body, Controller, Get, Post, Put, UseGuards } from '@nestjs/common';
 import { CouponService } from './coupon.service';
 import { GetUser, Roles } from 'src/shared/decorators';
 import { JwtPayload } from 'src/auth/strategies';
-import { CreateCouponDto, UpdateCouponDto } from './dto';
+import { ApplyCouponDto, CreateCouponDto, UpdateCouponDto } from './dto';
 import { RoleGuard } from 'src/shared/guards';
 import { UserRoles } from 'src/user/schema/user.schema';
 
@@ -18,6 +18,11 @@ export class CouponController {
   @Get('/get-all')
   getAllCoupons() {
     return this.couponService.getAllCoupon();
+  }
+
+  @Post('/apply')
+  applyCoupon(@GetUser() user: JwtPayload, @Body() dto: ApplyCouponDto) {
+    return this.couponService.applyCoupon(user, dto);
   }
 
   @Post('/create')
