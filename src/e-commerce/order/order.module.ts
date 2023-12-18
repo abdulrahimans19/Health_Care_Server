@@ -10,6 +10,7 @@ import {
 } from 'src/user-profile/schema/user-profile.schema';
 import { UserModule } from 'src/user/user.module';
 import { Coupon, coupon_schema } from '../coupon/schema/coupon.schema';
+import { PaymentModule } from 'src/payment/payment.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { Coupon, coupon_schema } from '../coupon/schema/coupon.schema';
       { name: Coupon.name, schema: coupon_schema },
     ]),
     UserModule,
+    PaymentModule,
   ],
   providers: [OrderService],
   controllers: [OrderController],

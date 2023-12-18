@@ -26,10 +26,12 @@ export class ProductController {
     @GetProfileId() profile_id: string,
     @Query('page') page?: number,
     @Query('pageSize') pageSize?: number,
+    @Query('country_code') country_code?: string,
   ) {
     return this.productService.getProducts(
       profile_id,
       product_types.PHARMA,
+      country_code,
       page,
       pageSize,
     );
@@ -40,10 +42,12 @@ export class ProductController {
     @GetProfileId() profile_id: string,
     @Query('page') page?: number,
     @Query('pageSize') pageSize?: number,
+    @Query('country_code') country_code?: string,
   ) {
     return this.productService.getProducts(
       profile_id,
       product_types.FOOD,
+      country_code,
       page,
       pageSize,
     );
@@ -57,10 +61,12 @@ export class ProductController {
     @Query('pageSize') pageSize?: number,
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    @Query('country_code') country_code?: string,
   ) {
     return this.productService.getProductsByMainCategory(
       profile_id,
       category_id,
+      country_code,
       page,
       pageSize,
       sortBy || 'price',
@@ -76,10 +82,12 @@ export class ProductController {
     @Query('pageSize') pageSize?: number,
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    @Query('country_code') country_code?: string,
   ) {
     return this.productService.getProductsBySubCategory(
       profile_id,
       category_id,
+      country_code,
       page,
       pageSize,
       sortBy || 'price',
@@ -91,8 +99,9 @@ export class ProductController {
   getSingleProduct(
     @Param('id') id: string,
     @GetProfileId() profile_id: string,
+    @Query('country_code') country_code?: string,
   ) {
-    return this.productService.getSingleProduct(profile_id, id);
+    return this.productService.getSingleProduct(profile_id, id, country_code);
   }
 
   @Post('/pharma/create')

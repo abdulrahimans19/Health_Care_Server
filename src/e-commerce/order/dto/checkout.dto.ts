@@ -8,4 +8,8 @@ export class CartCheckoutDto {
   @IsOptional()
   @IsString()
   coupon: string;
+
+  @IsNotEmpty()
+  @IsString()
+  payment_mode: string;
 }

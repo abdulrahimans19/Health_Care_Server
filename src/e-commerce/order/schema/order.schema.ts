@@ -45,8 +45,11 @@ export class Order extends Document {
   @Prop({ required: true })
   discounted_amount: number;
 
-  @Prop({ enum: OrderStatus, default: OrderStatus.CREATED })
+  @Prop({ enum: OrderStatus, default: OrderStatus.PENDING })
   order_status: OrderStatus;
+
+  @Prop()
+  payment_id: string;
 
   @Prop({ default: 1 })
   status: number;

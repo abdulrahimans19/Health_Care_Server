@@ -18,6 +18,23 @@ export class ReviewService {
     @InjectModel(Order.name) private readonly orderModel: Model<Order>,
   ) {}
 
+  async getProductReview(
+    product_id: string,
+    pageSize: number = 10,
+    page: number = 1,
+  ) {
+    const skip = (page - 1) * pageSize;
+    const reviews = await this.reviewModel
+      .find({
+        product_id: new Types.ObjectId(product_id),
+      })
+      .sort({ created_at: -1 })
+      .skip(skip)
+      .limit(pageSize);
+
+    return { reviews };
+  }
+
   async addReview(profile_id: string, dto: CreateReviewDto) {
     const existingReview = await this.reviewModel.findOne({
       profile_id,
