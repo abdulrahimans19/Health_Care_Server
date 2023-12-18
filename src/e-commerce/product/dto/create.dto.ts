@@ -31,6 +31,10 @@ export class CreateProductDto {
   @IsNumber()
   offer_price: number;
 
+  @IsOptional()
+  @IsNumber()
+  quantity: number;
+
   @IsNotEmpty()
   @IsMongoId()
   sub_category_id: string;

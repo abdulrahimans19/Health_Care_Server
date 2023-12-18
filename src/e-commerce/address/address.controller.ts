@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { AddressService } from './address.service';
 import { GetProfileId } from 'src/shared/decorators/get-profile-id.decorator';
 import { CreateAddressDto, UpdateAddressDto } from './dto';
@@ -13,6 +21,11 @@ export class AddressController {
     return this.addressService.getAddress(profile_id);
   }
 
+  @Get(':id')
+  getSingleAddress(@Param('id') id: string) {
+    return this.addressService.getSingleAddress(id);
+  }
+
   @Post('/create')
   @UseGuards(ProfileGuard)
   createAddress(
@@ -22,7 +35,7 @@ export class AddressController {
     return this.addressService.createAddress(profile_id, dto);
   }
 
-  @Post('/update')
+  @Put('/update')
   @UseGuards(ProfileGuard)
   updateAddress(
     @GetProfileId() profile_id: string,
