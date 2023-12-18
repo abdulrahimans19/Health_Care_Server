@@ -2,16 +2,18 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, ClientSession } from 'mongoose';
 import { Order, OrderStatus } from './schema/order.schema';
 import { Cart } from '../cart/schema/cart.schema';
-import { CartCheckoutDto } from './dto';
+import { CartCheckoutDto, ValidatePaymentDto } from './dto';
 import { calculateTotalPrice } from '../utils/utils';
 import { product_types } from '../types';
 import { Coupon } from '../coupon/schema/coupon.schema';
 import { JwtPayload } from 'src/auth/strategies';
+import { PaymentService } from 'src/payment/payment.service';
 
 @Injectable()
 export class OrderService {
@@ -19,6 +21,7 @@ export class OrderService {
     @InjectModel(Order.name) private readonly orderModel: Model<Order>,
     @InjectModel(Cart.name) private readonly cartModel: Model<Cart>,
     @InjectModel(Coupon.name) private readonly couponModel: Model<Coupon>,
+    private readonly paymentService: PaymentService,
   ) {}
 
   async getProfileOrder(
@@ -27,7 +30,11 @@ export class OrderService {
     payment_status: string,
   ) {
     return this.orderModel
-      .find({ profile_id, product_type, order_status: payment_status })
+      .find({
+        profile_id: new Types.ObjectId(profile_id),
+        product_type,
+        order_status: payment_status,
+      })
       .populate({
         path: 'product_id',
         model: 'Product',
@@ -50,10 +57,12 @@ export class OrderService {
     product_type: product_types,
     cartField: string,
   ) {
-    const session = await this.orderModel.startSession();
-    session.startTransaction();
+    let session: ClientSession;
 
     try {
+      session = await this.orderModel.startSession();
+      session.startTransaction();
+
       const cart: any = await this.cartModel.findOne({ profile_id }).populate({
         path: `${cartField}.product`,
         model: 'Product',
@@ -94,6 +103,23 @@ export class OrderService {
         }
 
         discountPercentage = coupon_exist.discount_percentage || 0;
+        let payable_total_amount = calculateTotalPrice(cart[cartField]);
+        const discountAmount =
+          (payable_total_amount * discountPercentage) / 100;
+        payable_total_amount = payable_total_amount - discountAmount;
+
+        let payment_id;
+        if (dto.payment_mode === 'PAYPAL') {
+          payment_id = await this.paymentService.createPaypalOrder(
+            total_amount,
+          );
+        } else {
+          payment_id = await this.paymentService.createStripeOrder(
+            user.email,
+            total_amount,
+            'INR',
+          );
+        }
 
         const orderPromises = cart[cartField].map(async (cartProduct) => {
           const productTotalAmount =
@@ -114,13 +140,14 @@ export class OrderService {
             [
               {
                 profile_id,
+                payment_id,
                 product_id: cartProduct.product._id,
                 quantity: cartProduct.quantity,
                 total_amount: discountedAmount,
                 real_total_amount: realTotalAmount,
                 discounted_amount: discountAmount,
                 address_id: dto.address_id,
-                order_status: OrderStatus.CREATED,
+                order_status: OrderStatus.PENDING,
                 product_type,
               },
             ],
@@ -129,10 +156,6 @@ export class OrderService {
         });
 
         const orders = await Promise.all(orderPromises);
-
-        total_amount = calculateTotalPrice(cart[cartField]);
-        const discountAmount = (total_amount * discountPercentage) / 100;
-        total_amount = total_amount - discountAmount;
 
         await this.couponModel.updateOne(
           { code: dto.coupon },
@@ -143,8 +166,25 @@ export class OrderService {
         await session.commitTransaction();
         session.endSession();
 
-        return { message: 'Order created.', orders, total_amount };
+        return {
+          message: 'Order created.',
+          orders,
+          total_amount: payable_total_amount,
+          payment_id,
+        };
       } else {
+        let payment_id;
+        if (dto.payment_mode === 'PAYPAL') {
+          payment_id = await this.paymentService.createPaypalOrder(
+            total_amount,
+          );
+        } else {
+          payment_id = await this.paymentService.createStripeOrder(
+            user.email,
+            total_amount,
+            'INR',
+          );
+        }
         const orderPromises = cart[cartField].map(async (cartProduct) => {
           const totalAmount = cartProduct.quantity * cartProduct.product.price;
 
@@ -159,13 +199,14 @@ export class OrderService {
             [
               {
                 profile_id,
+                payment_id,
                 product_id: cartProduct.product._id,
                 quantity: cartProduct.quantity,
                 total_amount: discountedAmount,
                 real_total_amount: realTotalAmount,
                 discounted_amount: discountedAmount,
                 address_id: dto.address_id,
-                order_status: OrderStatus.CREATED,
+                order_status: OrderStatus.PENDING,
                 product_type,
               },
             ],
@@ -182,11 +223,13 @@ export class OrderService {
         await session.commitTransaction();
         session.endSession();
 
-        return { message: 'Order created.', orders, total_amount };
+        return { message: 'Order created.', orders, total_amount, payment_id };
       }
     } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
+      if (session) {
+        await session.abortTransaction();
+        session.endSession();
+      }
       console.error(error);
       throw error;
     }
@@ -223,5 +266,28 @@ export class OrderService {
       product_types.FOOD,
       'food_products',
     );
+  }
+
+  async validateOrderPayment(dto: ValidatePaymentDto) {
+    let payment_status: boolean;
+    if (dto.payment_mode === 'STRIPE') {
+      payment_status = await this.paymentService.validateStripeOrder(
+        dto.payment_id,
+      );
+    } else {
+      payment_status = await this.paymentService.validatePaypalPayment(
+        dto.payment_id,
+      );
+    }
+    if (payment_status) {
+      await this.orderModel.updateMany(
+        { payment_id: dto.payment_id },
+        { $set: { order_status: OrderStatus.SHIPPED, status: 2 } },
+      );
+
+      return { message: 'Payment Successfull Order Created.' };
+    } else {
+      throw new ConflictException('Payment Failed.');
+    }
   }
 }

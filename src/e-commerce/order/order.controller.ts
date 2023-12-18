@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { GetProfileId } from 'src/shared/decorators/get-profile-id.decorator';
-import { CartCheckoutDto } from './dto';
+import { CartCheckoutDto, ValidatePaymentDto } from './dto';
 import { product_types } from '../types';
 import { ProfileGuard } from 'src/shared/guards';
 import { GetUser } from 'src/shared/decorators';
@@ -53,5 +53,10 @@ export class OrderController {
     @Body() dto: CartCheckoutDto,
   ) {
     return this.orderService.foodCartCheckout(profile_id, user, dto);
+  }
+
+  @Post('/validate-payment')
+  validateOrderPayment(@Body() dto: ValidatePaymentDto) {
+    return this.orderService.validateOrderPayment(dto);
   }
 }

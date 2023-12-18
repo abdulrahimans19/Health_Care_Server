@@ -4,6 +4,8 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsArray,
+  ArrayNotEmpty,
 } from 'class-validator';
 
 export class CreateProductDto {
@@ -31,11 +33,17 @@ export class CreateProductDto {
   @IsNumber()
   offer_price: number;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsNumber()
   quantity: number;
 
   @IsNotEmpty()
   @IsMongoId()
   sub_category_id: string;
+
+  @IsNotEmpty()
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  country_codes: string[];
 }
