@@ -26,7 +26,10 @@ export class ProductController {
     @GetProfileId() profile_id: string,
     @Query('page') page?: number,
     @Query('pageSize') pageSize?: number,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
     @Query('country_code') country_code?: string,
+    @Query('search') search?: string,
   ) {
     return this.productService.getProducts(
       profile_id,
@@ -34,6 +37,9 @@ export class ProductController {
       country_code,
       page,
       pageSize,
+      sortBy || 'price',
+      sortOrder || 'asc',
+      search,
     );
   }
 
@@ -42,7 +48,10 @@ export class ProductController {
     @GetProfileId() profile_id: string,
     @Query('page') page?: number,
     @Query('pageSize') pageSize?: number,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
     @Query('country_code') country_code?: string,
+    @Query('search') search?: string,
   ) {
     return this.productService.getProducts(
       profile_id,
@@ -50,6 +59,9 @@ export class ProductController {
       country_code,
       page,
       pageSize,
+      sortBy || 'price',
+      sortOrder || 'asc',
+      search,
     );
   }
 

@@ -18,33 +18,45 @@ export class ProductService {
   ) {}
 
   async getProducts(
-    profileId: string,
+    profile_id: string,
     productType: product_types,
     country_code: string,
     page: number = 1,
     pageSize: number = 10,
+    sortBy: string = 'price',
+    sortOrder: 'asc' | 'desc' = 'desc',
+    searchKeyword?: string, // Optional search keyword
   ): Promise<any> {
     const skip = (page - 1) * pageSize;
 
+    const query: any = {
+      product_type: productType,
+      country_codes: { $in: [country_code, 'all'] },
+    };
+
+    if (searchKeyword) {
+      query.$or = [
+        { name: { $regex: searchKeyword, $options: 'i' } }, // Case-insensitive regex search on name
+        { description: { $regex: searchKeyword, $options: 'i' } }, // Case-insensitive regex search on description
+      ];
+    }
+
     const products = await this.productModel
-      .find({
-        product_type: productType,
-        country_codes: { $in: [country_code, 'all'] }, // 'all' for products available to all countries
-      })
-      .sort({ created_at: -1 })
+      .find(query)
+      .sort({ [sortBy]: sortOrder })
       .skip(skip)
       .limit(pageSize);
 
     const enhancedProducts = await this.convertProductWithCartAndWishlistStatus(
       products,
-      profileId,
+      profile_id,
     );
 
     return { products: enhancedProducts };
   }
 
   async getProductsByMainCategory(
-    profileId: string,
+    profile_id: string,
     category_id: string,
     country_code: string,
     page: number = 1,
@@ -77,14 +89,14 @@ export class ProductService {
 
     const enhancedProducts = await this.convertProductWithCartAndWishlistStatus(
       products,
-      profileId,
+      profile_id,
     );
 
     return { products: enhancedProducts };
   }
 
   async getProductsBySubCategory(
-    profileId: string,
+    profile_id: string,
     category_id: string,
     country_code: string,
     page: number = 1,
@@ -105,14 +117,14 @@ export class ProductService {
 
     const enhancedProducts = await this.convertProductWithCartAndWishlistStatus(
       products,
-      profileId,
+      profile_id,
     );
 
     return { products: enhancedProducts };
   }
 
   async getSingleProduct(
-    profileId: string,
+    profile_id: string,
     productId: string,
     country_code: string,
   ) {
@@ -126,13 +138,13 @@ export class ProductService {
     }
 
     const cartStatus = await this.cartService.isProductInCart(
-      profileId,
+      profile_id,
       productId,
       product.product_type,
     );
 
     const favouritesStatus = await this.favouritesService.isProductInFavorites(
-      profileId,
+      profile_id,
       productId,
       product.product_type,
     );
@@ -152,14 +164,14 @@ export class ProductService {
     const enhancedRelatedProducts = await Promise.all(
       relatedProducts.map(async (relatedProduct: Product) => {
         const relatedCartStatus = await this.cartService.isProductInCart(
-          profileId,
+          profile_id,
           relatedProduct._id,
           relatedProduct.product_type,
         );
 
         const relatedFavouritesStatus =
           await this.favouritesService.isProductInFavorites(
-            profileId,
+            profile_id,
             relatedProduct._id,
             relatedProduct.product_type,
           );
@@ -217,19 +229,19 @@ export class ProductService {
 
   async convertProductWithCartAndWishlistStatus(
     products: Product[],
-    profileId: string,
+    profile_id: string,
   ) {
     const enhancedProducts = await Promise.all(
       products.map(async (product) => {
         const cartStatus = await this.cartService.isProductInCart(
-          profileId,
+          profile_id,
           product._id,
           product.product_type,
         );
 
         const favouritesStatus =
           await this.favouritesService.isProductInFavorites(
-            profileId,
+            profile_id,
             product._id,
             product.product_type,
           );

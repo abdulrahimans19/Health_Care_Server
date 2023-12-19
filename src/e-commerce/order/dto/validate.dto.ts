@@ -8,4 +8,8 @@ export class ValidatePaymentDto {
   @IsNotEmpty()
   @IsString()
   payment_id: string;
+
+  @IsNotEmpty()
+  @IsString()
+  coupon: string;
 }

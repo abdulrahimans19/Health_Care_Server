@@ -15,11 +15,15 @@ export class OrderController {
   getPharmaOrders(
     @GetProfileId() profile_id: string,
     @Query('payment_status') payment_status: string,
+    @Query('page') page: number,
+    @Query('pageSize') pageSize: number,
   ) {
     return this.orderService.getProfileOrder(
       profile_id,
       product_types.PHARMA,
       payment_status,
+      page,
+      pageSize,
     );
   }
 
@@ -55,8 +59,31 @@ export class OrderController {
     return this.orderService.foodCartCheckout(profile_id, user, dto);
   }
 
-  @Post('/validate-payment')
-  validateOrderPayment(@Body() dto: ValidatePaymentDto) {
-    return this.orderService.validateOrderPayment(dto);
+  @Post('/pharma/validate-payment')
+  validatePharmaOrderPayment(
+    @GetUser() user: JwtPayload,
+    @GetProfileId() profile_id: string,
+    @Body() dto: ValidatePaymentDto,
+  ) {
+    return this.orderService.validateOrderPayment(
+      user,
+      profile_id,
+      dto,
+      product_types.PHARMA,
+    );
+  }
+
+  @Post('/food/validate-payment')
+  validateFoodOrderPayment(
+    @GetUser() user: JwtPayload,
+    @GetProfileId() profile_id: string,
+    @Body() dto: ValidatePaymentDto,
+  ) {
+    return this.orderService.validateOrderPayment(
+      user,
+      profile_id,
+      dto,
+      product_types.FOOD,
+    );
   }
 }
