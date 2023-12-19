@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Product } from './schema/product.schema';
 import { CreateProductDto, UpdateProductDto } from './dto';
 import { product_types } from '../types';
@@ -20,13 +20,17 @@ export class ProductService {
   async getProducts(
     profileId: string,
     productType: product_types,
+    country_code: string,
     page: number = 1,
     pageSize: number = 10,
   ): Promise<any> {
     const skip = (page - 1) * pageSize;
 
     const products = await this.productModel
-      .find({ product_type: productType })
+      .find({
+        product_type: productType,
+        country_codes: { $in: [country_code, 'all'] }, // 'all' for products available to all countries
+      })
       .sort({ created_at: -1 })
       .skip(skip)
       .limit(pageSize);
@@ -42,6 +46,7 @@ export class ProductService {
   async getProductsByMainCategory(
     profileId: string,
     category_id: string,
+    country_code: string,
     page: number = 1,
     pageSize: number = 10,
     sortBy: string = 'price',
@@ -57,13 +62,14 @@ export class ProductService {
       throw new NotFoundException('Main category not found.');
     }
 
-    const subCategoryIds = mainCategory.sub_categories.map((subCategory) =>
-      subCategory.toString(),
+    const subCategoryIds = mainCategory.sub_categories.map(
+      (subCategory) => subCategory,
     );
 
     const products = await this.productModel
       .find({
         sub_category_id: { $in: subCategoryIds },
+        country_codes: { $in: [country_code] },
       })
       .sort({ [sortBy]: sortOrder })
       .skip(skip)
@@ -80,6 +86,7 @@ export class ProductService {
   async getProductsBySubCategory(
     profileId: string,
     category_id: string,
+    country_code: string,
     page: number = 1,
     pageSize: number = 10,
     sortBy: string = 'price',
@@ -90,6 +97,7 @@ export class ProductService {
     const products = await this.productModel
       .find({
         sub_category_id: category_id,
+        country_codes: { $in: [country_code, 'all'] },
       })
       .sort({ [sortBy]: sortOrder })
       .skip(skip)
@@ -103,10 +111,15 @@ export class ProductService {
     return { products: enhancedProducts };
   }
 
-  async getSingleProduct(profileId: string, productId: string) {
-    const product = await this.productModel
-      .findOne({ _id: productId })
-      .populate('reviews');
+  async getSingleProduct(
+    profileId: string,
+    productId: string,
+    country_code: string,
+  ) {
+    const product = await this.productModel.findOne({
+      _id: new Types.ObjectId(productId),
+      country_codes: { $in: [country_code, 'all'] },
+    });
 
     if (!product) {
       return { product: null, relatedProducts: [] };
@@ -125,8 +138,9 @@ export class ProductService {
     );
 
     const relatedProducts = await this.productModel.find({
-      sub_category_id: product.sub_category_id,
+      sub_category_id: product.sub_category_id.toString(),
       _id: { $ne: product._id },
+      country_codes: { $in: [country_code] },
     });
 
     const enhancedProduct = {
@@ -135,7 +149,33 @@ export class ProductService {
       favouritesStatus,
     };
 
-    return { product: enhancedProduct, relatedProducts };
+    const enhancedRelatedProducts = await Promise.all(
+      relatedProducts.map(async (relatedProduct: Product) => {
+        const relatedCartStatus = await this.cartService.isProductInCart(
+          profileId,
+          relatedProduct._id,
+          relatedProduct.product_type,
+        );
+
+        const relatedFavouritesStatus =
+          await this.favouritesService.isProductInFavorites(
+            profileId,
+            relatedProduct._id,
+            relatedProduct.product_type,
+          );
+
+        return {
+          ...(relatedProduct.toJSON() as Product),
+          cartStatus: relatedCartStatus,
+          favouritesStatus: relatedFavouritesStatus,
+        };
+      }),
+    );
+
+    return {
+      product: enhancedProduct,
+      relatedProducts: enhancedRelatedProducts,
+    };
   }
 
   async createProduct(dto: CreateProductDto, productType: product_types) {
@@ -149,6 +189,7 @@ export class ProductService {
       brand: dto?.brand,
       quantity: dto.quantity,
       product_type: productType,
+      country_codes: dto.country_codes,
     });
 
     return { message: 'Product Created.' };
@@ -159,7 +200,7 @@ export class ProductService {
 
     await this.productModel.updateOne(
       { _id: product_id },
-      { $set: updateData },
+      { $set: { ...updateData } },
     );
 
     return { message: 'Product Updated.' };

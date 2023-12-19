@@ -25,7 +25,7 @@ export class Product extends Document {
   @Prop()
   product_type: string;
 
-  @Prop({ default: 0 })
+  @Prop({ default: 10 })
   quantity: number;
 
   @Prop({ default: 0 })
@@ -51,6 +51,9 @@ export class Product extends Document {
 
   @Prop({ default: Date.now(), index: true })
   updated_at: Date;
+
+  @Prop({ type: [String], default: [] })
+  country_codes: string[];
 }
 
 export const product_schema = SchemaFactory.createForClass(Product);

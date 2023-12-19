@@ -38,11 +38,14 @@ export class AddressService {
   }
 
   async getAddress(profile_id: string) {
-    const address = await this.addressModel.find({ profile_id });
+    const address = await this.addressModel.find({
+      profile_id: new Types.ObjectId(profile_id),
+    });
     return { address };
   }
 
   async getSingleAddress(id: string) {
-    return await this.addressModel.findOne({ _id: id });
+    const address = await this.addressModel.findOne({ _id: id });
+    return { address };
   }
 }
