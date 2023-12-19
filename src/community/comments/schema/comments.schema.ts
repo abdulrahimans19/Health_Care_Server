@@ -3,6 +3,7 @@ import { Document, SchemaTypes, Types } from 'mongoose';
 
 @Schema()
 export class UserPostComments extends Document {
+
   @Prop({ ref: 'userposts' })
   post_id: Types.ObjectId;
 

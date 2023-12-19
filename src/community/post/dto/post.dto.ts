@@ -6,6 +6,7 @@ export class CreatePostDto {
   @IsString()
   post: string;
 }
+
 export class deletePostDto {
   @IsNotEmpty()
   @IsMongoId()

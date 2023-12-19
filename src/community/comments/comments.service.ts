@@ -34,6 +34,12 @@ export class CommentsService {
         comment: dto.comment,
         profile_id: new mongoose.Types.ObjectId(profile_id),
       }).save();
+
+      await this.postModel.findOneAndUpdate(
+        { _id: dto.post_id },
+        { $inc: { total_comments: 1 } },
+      );
+
       return { message: 'comment added' };
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_GATEWAY);
@@ -46,7 +52,9 @@ export class CommentsService {
         _id: new mongoose.Types.ObjectId(dto.post_id),
         is_deleted: false,
       });
+
       console.log(userPost);
+
       if (!userPost) {
         throw new HttpException('post not found', HttpStatus.BAD_GATEWAY);
       }
@@ -74,6 +82,11 @@ export class CommentsService {
           },
         },
         {
+          $sort: {
+            created_at: -1, // Sort by created_at in descending order (newest first)
+          },
+        },
+        {
           $skip: startIndex,
         },
         {
@@ -82,6 +95,7 @@ export class CommentsService {
         {
           $project: {
             profile_id: 0,
+            people_liked: 0,
           },
         },
       ]);
@@ -91,6 +105,7 @@ export class CommentsService {
       throw new HttpException(error, HttpStatus.BAD_GATEWAY);
     }
   }
+  
   async deleteComments(dto: deleteCommentDto, profile_id) {
     try {
       console.log(profile_id, dto.comment_id);
@@ -99,6 +114,7 @@ export class CommentsService {
         profile_id: new mongoose.Types.ObjectId(profile_id),
         is_deleted: false,
       });
+      console.log(userComment);
       if (!userComment) {
         throw new UnauthorizedException('unable to process request');
       }
@@ -106,8 +122,87 @@ export class CommentsService {
         { _id: new mongoose.Types.ObjectId(dto.comment_id) },
         { is_deleted: true },
       );
+      await this.postModel.findOneAndUpdate(
+        { _id: userComment.post_id },
+        { $inc: { total_comments: -1 } },
+      );
 
       return { message: 'comment was deleted' };
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_GATEWAY);
+    }
+  }
+
+  async likeComment(profile_id: string, id: string) {
+    try {
+      const findComment = await this.commentModel.findOne({
+        _id: new mongoose.Types.ObjectId(id),
+        is_deleted: false,
+      });
+      if (!findComment) {
+        throw new HttpException(
+          'comment was not found',
+          HttpStatus.BAD_GATEWAY,
+        );
+      }
+
+      const likedComment = await this.commentModel.findOne({
+        _id: new mongoose.Types.ObjectId(id),
+        is_deleted: false,
+        people_liked: new mongoose.Types.ObjectId(profile_id),
+      });
+
+      if (likedComment) {
+        throw new HttpException(
+          'already liked this post',
+          HttpStatus.BAD_GATEWAY,
+        );
+      }
+      await this.commentModel.findOneAndUpdate(
+        { _id: new mongoose.Types.ObjectId(id), is_deleted: false },
+        {
+          $push: { people_liked: new mongoose.Types.ObjectId(profile_id) },
+          $inc: { total_likes: 1 },
+        },
+      );
+      return { message: 'comment was liked' };
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_GATEWAY);
+    }
+  }
+
+  async unLikeComment(profile_id: string, id: string) {
+    try {
+      const findComment = await this.commentModel.findOne({
+        _id: new mongoose.Types.ObjectId(id),
+        is_deleted: false,
+      });
+      if (!findComment) {
+        throw new HttpException(
+          'comment was not found',
+          HttpStatus.BAD_GATEWAY,
+        );
+      }
+      const likedComment = await this.commentModel.findOne({
+        _id: new mongoose.Types.ObjectId(id),
+        is_deleted: false,
+        people_liked: new mongoose.Types.ObjectId(profile_id),
+      });
+
+      if (!likedComment) {
+        throw new HttpException(
+          'you havent liked the post',
+          HttpStatus.BAD_GATEWAY,
+        );
+      }
+      await this.commentModel.findOneAndUpdate(
+        { _id: new mongoose.Types.ObjectId(id), is_deleted: false },
+        {
+          $pull: { people_liked: new mongoose.Types.ObjectId(profile_id) },
+          $inc: { total_likes: -1 },
+        },
+      );
+      return { message: 'comment was un liked' };
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_GATEWAY);
     }

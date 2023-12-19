@@ -73,10 +73,13 @@ export class PostService {
 
   async getAllUserPost(profile_id: string) {
     try {
-      const alluserPost = await this.postModel.find({
-        profile_id: new mongoose.Types.ObjectId(profile_id),
-        is_deleted: false,
-      });
+      const alluserPost = await this.postModel
+        .find({
+          profile_id: new mongoose.Types.ObjectId(profile_id),
+          is_deleted: false,
+        })
+        .sort({ created_at: -1 })
+        .select({ people_liked: 0, profile_id: 0 });
       return alluserPost;
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_GATEWAY);
@@ -140,6 +143,22 @@ export class PostService {
       );
 
       return { message: 'post unliked' };
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_GATEWAY);
+    }
+  }
+  
+  async getAllPosts(page) {
+    try {
+      const startIndex = (page.page - 1) * 10;
+      console.log(startIndex);
+      const allPost = await this.postModel
+        .find()
+        .skip(startIndex)
+        .limit(10)
+        .sort({ created_at: -1 })
+        .select('-profile_id -people_liked');
+      return allPost;
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_GATEWAY);
     }

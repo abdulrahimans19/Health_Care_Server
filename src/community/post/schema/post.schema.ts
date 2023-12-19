@@ -3,6 +3,7 @@ import { Document, SchemaTypes, Types } from 'mongoose';
 
 @Schema()
 export class UserPost extends Document {
+  
   @Prop({ index: true })
   profile_id: Types.ObjectId;
 
