@@ -59,7 +59,7 @@ import { OrderModule } from './e-commerce/order/order.module';
     CouponModule,
     OrderModule,
   ],
-  controllers: [AppController, CommentsController],
-  providers: [AppService, { provide: APP_GUARD, useClass: AtGuard }, CommentsService],
+  controllers: [AppController],
+  providers: [AppService, { provide: APP_GUARD, useClass: AtGuard }],
 })
 export class AppModule {}
