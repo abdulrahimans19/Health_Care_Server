@@ -26,6 +26,7 @@ import { CommentsModule } from './community/comments/comments.module';
 import { CouponModule } from './e-commerce/coupon/coupon.module';
 import { OrderModule } from './e-commerce/order/order.module';
 import { PaymentModule } from './payment/payment.module';
+import { DoctorModule } from './consultancy/doctor/doctor.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { PaymentModule } from './payment/payment.module';
     CouponModule,
     OrderModule,
     PaymentModule,
+    DoctorModule
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: AtGuard }],
