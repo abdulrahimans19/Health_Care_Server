@@ -2,9 +2,19 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types, SchemaTypes } from 'mongoose';
 import { MainCategories } from 'src/e-commerce/main-categories/schema/main-categories.schema';
 
+interface AvailabilitySlot {
+  start_time: string;
+  end_time: string;
+}
+
+interface Availability {
+  day: string;
+  slots: AvailabilitySlot[];
+}
+
 export enum Gender {
   Male = 'male',
-  Female = 'female',
+  Female = 'female'
 }
 
 @Schema({
@@ -40,6 +50,10 @@ export class Doctor {
 
   @Prop()
   experience: number;
+
+  @Prop()
+  availability: Availability[];
+  
 }
 
 export const doctor_schema = SchemaFactory.createForClass(Doctor);
