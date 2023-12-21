@@ -1,6 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { AwsService } from './aws.service';
-import { Public } from 'src/shared/decorators';
 
 @Controller('aws')
 export class AwsController {
