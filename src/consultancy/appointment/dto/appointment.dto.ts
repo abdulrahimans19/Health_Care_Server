@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 import { Types } from 'mongoose';
 
-export class DoctorDto {
+export class AppointmentDto {
   @IsString()
   @IsNotEmpty()
   name: string;
@@ -18,20 +18,20 @@ export class DoctorDto {
 
   @IsMongoId()
   @IsNotEmpty()
-  category_id: Types.ObjectId;
+  doctorId: Types.ObjectId;
 
-  @IsString()
+  @IsMongoId()
   @IsNotEmpty()
-  about: string;
+  patientId: Types.ObjectId;
 
   @IsNotEmpty()
   featured: boolean;
 
-  @IsOptional()
-  @IsString()
-  image: string;
-
-  @IsNumber()
   @IsNotEmpty()
-  experience: number;
+  @IsString()
+  date: string;
+
+  @IsNotEmpty()
+  @IsString()
+  time: number;
 }

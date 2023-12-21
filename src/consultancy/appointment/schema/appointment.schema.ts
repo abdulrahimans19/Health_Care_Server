@@ -12,7 +12,7 @@ export class Appointment {
   doctorId: string;
 
   @Prop()
-  patientName: string;
+  patientId: string;
 
   @Prop()
   date: string;
