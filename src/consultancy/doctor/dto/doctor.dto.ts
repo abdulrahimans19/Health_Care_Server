@@ -35,3 +35,9 @@ export class DoctorDto {
   @IsNotEmpty()
   experience: number;
 }
+
+export class RateDto {
+  @IsNumber()
+  @IsNotEmpty()
+  rating: number;
+}

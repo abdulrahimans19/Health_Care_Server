@@ -1,5 +1,11 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { DoctorDto } from './dto/doctor.dto';
+import {
+  ConflictException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { DoctorDto, RateDto } from './dto/doctor.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Doctor, Gender } from './schema/doctor.schema';
 import mongoose, { Model } from 'mongoose';
@@ -55,10 +61,10 @@ export class DoctorService {
     }
   }
 
-  async getDoctorBySearch(search: string) {
+  async getDoctorBySearch(search: string, categoryId: string) {
     try {
-      console.log(search);
       const searchQuery = {
+        category_id: new mongoose.Types.ObjectId(categoryId),
         $or: [
           {
             name: { $regex: search, $options: 'i' },
@@ -78,6 +84,57 @@ export class DoctorService {
         _id: new mongoose.Types.ObjectId(doctorId),
       });
       return { getDoctorById };
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async getDoctorByCategory(categoryId: string) {
+    try {
+      const doctorByCategory = await this.doctorModel.find({
+        category_id: new mongoose.Types.ObjectId(categoryId),
+      });
+      return { doctorByCategory };
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async addDoctorRating(
+    rateDto: RateDto,
+    doctor_id: string,
+    profileId: string,
+  ) {
+    try {
+      const getDoctor = await this.doctorModel.findById({
+        _id: new mongoose.Types.ObjectId(doctor_id),
+      });
+
+      if (!getDoctor) {
+        throw new NotFoundException('Doctor not found');
+      }
+
+      const existngRating = getDoctor.ratings.find((r) =>
+        r.user_profile.equals(new mongoose.Types.ObjectId(profileId)),
+      );
+
+      if (existngRating) {
+        throw new ConflictException('User has already rated this doctor');
+      }
+
+      getDoctor.ratings.push({
+        user_profile: new mongoose.Types.ObjectId(profileId),
+        rating: rateDto.rating,
+      });
+      const totalRating = getDoctor.ratings.reduce(
+        (sum, rating) => sum + rating.rating,
+        0,
+      );
+
+      getDoctor.average_rating = totalRating / getDoctor.ratings.length;
+      await getDoctor.save();
+
+      return { getDoctor };
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
