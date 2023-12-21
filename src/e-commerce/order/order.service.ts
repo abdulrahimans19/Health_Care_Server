@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, ClientSession } from 'mongoose';
 import { Order, OrderStatus } from './schema/order.schema';
@@ -65,15 +69,20 @@ export class OrderService {
       session = await this.orderModel.startSession();
       session.startTransaction();
 
-      const cart: any = await this.cartModel.findOne({ profile_id }).populate({
-        path: `${cartField}.product`,
-        model: 'Product',
-      });
+      // Fetch the cart with populated product details
+      const cart: any = await this.cartModel
+        .findOne({ profile_id })
+        .populate({
+          path: `${cartField}.product`,
+          model: 'Product',
+        })
+        .session(session);
 
       if (!cart || cart[cartField].length === 0) {
         throw new NotFoundException('Cart is empty');
       }
 
+      // Check stock availability for each product in the cart
       for (const cartProduct of cart[cartField]) {
         if (cartProduct.quantity > cartProduct.product.quantity) {
           throw new ConflictException(
@@ -82,16 +91,20 @@ export class OrderService {
         }
       }
 
+      // Calculate the total amount before applying discounts
       let total_amount = calculateTotalPrice(cart[cartField]);
       let discountPercentage: number;
 
+      // Check if a coupon is provided in the DTO
       if (dto.coupon) {
         const currentDate = new Date();
-        const coupon_exist = await this.couponModel.findOne({
-          code: dto.coupon,
-          user_id: { $nin: [user.sub] },
-          expiry_date: { $gt: currentDate },
-        });
+        const coupon_exist = await this.couponModel
+          .findOne({
+            code: dto.coupon,
+            user_id: { $nin: [user.sub] },
+            expiry_date: { $gt: currentDate },
+          })
+          .session(session);
 
         if (!coupon_exist) {
           throw new ConflictException('Invalid Coupon');
@@ -104,19 +117,28 @@ export class OrderService {
         }
 
         discountPercentage = coupon_exist.discount_percentage || 0;
+
+        // Calculate discounted amount and update total_amount
         let payable_total_amount = calculateTotalPrice(cart[cartField]);
         const discountAmount =
           (payable_total_amount * discountPercentage) / 100;
         payable_total_amount = payable_total_amount - discountAmount;
 
+        // Create payment ID based on the selected payment mode
         let payment_id;
-
         if (dto.payment_mode === 'PAYPAL') {
-          payment_id = await this.paymentService.createPaypalOrder(total_amount);
+          payment_id = await this.paymentService.createPaypalOrder(
+            payable_total_amount, // Use payable_total_amount for PayPal
+          );
         } else {
-          payment_id = await this.paymentService.createStripeOrder(user.email, total_amount, 'INR');
+          payment_id = await this.paymentService.createStripeOrder(
+            user.email,
+            payable_total_amount, // Use payable_total_amount for Stripe
+            'INR',
+          );
         }
 
+        // Create an array of order creation promises
         const orderPromises = cart[cartField].map(async (cartProduct) => {
           const productTotalAmount =
             cartProduct.quantity * cartProduct.product.price;
@@ -128,10 +150,12 @@ export class OrderService {
           const realTotalAmount = productTotalAmount;
           const discountedAmount = productTotalAmount - discountAmount;
 
+          // Update product quantity and product_sold fields
           cartProduct.product.quantity -= cartProduct.quantity;
           cartProduct.product.product_sold += cartProduct.quantity;
           await cartProduct.product.save();
 
+          // Create and return an order document
           return this.orderModel.create(
             [
               {
@@ -151,8 +175,10 @@ export class OrderService {
           );
         });
 
+        // Execute all order creation promises in parallel
         const orders = await Promise.all(orderPromises);
 
+        // Commit the transaction
         await session.commitTransaction();
         session.endSession();
 
@@ -163,6 +189,7 @@ export class OrderService {
           payment_id,
         };
       } else {
+        // If no coupon, proceed without discounts
         let payment_id;
         if (dto.payment_mode === 'PAYPAL') {
           payment_id = await this.paymentService.createPaypalOrder(
@@ -175,12 +202,15 @@ export class OrderService {
             'INR',
           );
         }
+
+        // Create an array of order creation promises
         const orderPromises = cart[cartField].map(async (cartProduct) => {
           const totalAmount = cartProduct.quantity * cartProduct.product.price;
 
           const realTotalAmount = totalAmount;
           const discountedAmount = totalAmount;
 
+          // Create and return an order document
           return this.orderModel.create(
             [
               {
@@ -200,18 +230,22 @@ export class OrderService {
           );
         });
 
+        // Execute all order creation promises in parallel
         const orders = await Promise.all(orderPromises);
 
+        // Update total_amount without discounts
         total_amount = calculateTotalPrice(cart[cartField]);
         const discountAmount = 0;
         total_amount = total_amount - discountAmount;
 
+        // Commit the transaction
         await session.commitTransaction();
         session.endSession();
 
         return { message: 'Order created.', orders, total_amount, payment_id };
       }
     } catch (error) {
+      // Rollback the transaction in case of an error
       if (session) {
         await session.abortTransaction();
         session.endSession();
