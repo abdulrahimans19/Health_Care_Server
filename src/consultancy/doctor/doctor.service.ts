@@ -77,9 +77,6 @@ export class DoctorService {
       const getDoctorById = await this.doctorModel.findById({
         _id: new mongoose.Types.ObjectId(doctorId),
       });
-      if (!getDoctorById) {
-        return { message: 'Doctor not found' };
-      }
       return { getDoctorById };
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
