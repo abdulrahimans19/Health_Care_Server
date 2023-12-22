@@ -52,4 +52,15 @@ export class MainCategoriesService {
 
     return { message: 'Main Category updated.' };
   }
+
+  async search(query: string) {
+    const regex = new RegExp(query, 'i');
+    const categories = await this.mainCategoryModel
+      .find({
+        $or: [{ title: { $regex: regex } }, { description: { $regex: regex } }],
+      })
+      .exec();
+
+    return { categories };
+  }
 }
