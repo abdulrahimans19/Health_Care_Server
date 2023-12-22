@@ -10,6 +10,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Doctor, Gender } from './schema/doctor.schema';
 import mongoose, { Model } from 'mongoose';
 
+type AggregationResult = {
+  _id: mongoose.Types.ObjectId;
+  doctors: Array<Doctor & { id: string }>;
+};
+
 @Injectable()
 export class DoctorService {
   constructor(
@@ -89,11 +94,20 @@ export class DoctorService {
     }
   }
 
-  async getDoctorByCategory(categoryId: string) {
+  async getDoctorByCategory(
+    categoryId: string,
+    page: number,
+    pageSize: number,
+  ) {
     try {
-      const doctorByCategory = await this.doctorModel.find({
-        category_id: new mongoose.Types.ObjectId(categoryId),
-      });
+      const skip = (page - 1) * pageSize;
+      const doctorByCategory = await this.doctorModel
+        .find({
+          category_id: new mongoose.Types.ObjectId(categoryId),
+        })
+        .skip(skip)
+        .limit(pageSize)
+        .exec();
       return { doctorByCategory };
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
@@ -130,13 +144,73 @@ export class DoctorService {
         (sum, rating) => sum + rating.rating,
         0,
       );
-
-      getDoctor.average_rating = totalRating / getDoctor.ratings.length;
+      const actualRatingCount = getDoctor.ratings.length - 1;
+      getDoctor.average_rating =
+        actualRatingCount > 0 ? totalRating / actualRatingCount : 0;
       await getDoctor.save();
 
-      return { getDoctor };
+      return { message: 'Your rate of experience submitted' };
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
+  }
+
+  async getTopDoctors(): Promise<Record<string, Doctor[]>> {
+    try {
+      console.log('hi');
+      const topRatedDoctorsByCategory =
+        await this.doctorModel.aggregate<AggregationResult>([
+          {
+            $group: {
+              _id: 'category_id',
+              doctors: { $push: '$$ROOT' },
+            },
+          },
+          {
+            $project: {
+              category_id: '$_id',
+              doctors: {
+                $slice: [
+                  {
+                    $map: {
+                      input: '$doctors',
+                      as: 'doctor',
+                      in: {
+                        _id: '$$doctor._id',
+                        name: '$$doctor.name',
+                        description: '$$doctor.description',
+                        average_rating: '$$doctor.average_rating',
+                      },
+                    },
+                  },
+                  2,
+                ],
+              },
+            },
+          },
+        ]);
+      console.log(
+        topRatedDoctorsByCategory.forEach((r) => console.log(r.doctors)),
+      );
+
+      const result: Record<string, Doctor[]> = {};
+
+      topRatedDoctorsByCategory.forEach((categoryResult) => {
+        const categoryDoctors = categoryResult.doctors.map(
+          (doctor) =>
+            ({
+              _id: doctor.id,
+              name: doctor.name,
+              description: doctor.description,
+              average_rating: doctor.average_rating,
+            } as any),
+        );
+        console.log('hi3');
+        result[categoryResult._id.toHexString()] = categoryDoctors;
+      });
+      console.log('h4');
+      console.log(result);
+      return result;
+    } catch (error) {}
   }
 }

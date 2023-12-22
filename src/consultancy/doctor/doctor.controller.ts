@@ -55,20 +55,26 @@ export class DoctorController {
     return this.doctorService.getDoctorDetails(doctorId);
   }
 
-  @Get('get-doctor-by-category/:categoryId')
-  getDoctorByCategory(@Param('categoryId') categoryId: string) {
-    console.log(categoryId);
-    return this.doctorService.getDoctorByCategory(categoryId);
+  @Get('get-doctor-by-category')
+  getDoctorByCategory(
+    @Query('categoryId') categoryId: string,
+    @Query('page') page?: number,
+    @Query('pageSize') pageSize?: number,
+  ) {
+    return this.doctorService.getDoctorByCategory(categoryId, page, pageSize);
   }
 
   @Post('doctor-add-rating')
   addDoctorRating(
     @GetProfileId() profileId: string,
-    @Query('doctor_id') doctor_id:string,
-    @Body() rateDto:RateDto
-    ) {
-      
-    return this.doctorService.addDoctorRating(rateDto,doctor_id,profileId);
+    @Query('doctor_id') doctor_id: string,
+    @Body() rateDto: RateDto,
+  ) {
+    return this.doctorService.addDoctorRating(rateDto, doctor_id, profileId);
   }
 
+  @Get('top-doctors')
+  getTopDoctors() {
+    return this.doctorService.getTopDoctors();
+  }
 }
