@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types, SchemaTypes } from 'mongoose';
+import { User } from 'src/user/schema/user.schema';
 
 @Schema({
   timestamps: {
@@ -8,11 +9,11 @@ import { Types, SchemaTypes } from 'mongoose';
   },
 })
 export class Appointment {
-  @Prop()
-  doctorId: string;
+  @Prop({ type: SchemaTypes.ObjectId, ref: User.name, index: true })
+  doctorId: Types.ObjectId;
 
-  @Prop()
-  patientId: string;
+  @Prop({ type: SchemaTypes.ObjectId, ref: User.name, index: true })
+  patientId: Types.ObjectId;
 
   @Prop()
   date: string;
