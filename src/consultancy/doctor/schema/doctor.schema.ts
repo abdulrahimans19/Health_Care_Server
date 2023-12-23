@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Types, SchemaTypes } from 'mongoose';
+import mongoose, { Types, SchemaTypes } from 'mongoose';
 import { MainCategories } from 'src/e-commerce/main-categories/schema/main-categories.schema';
 
 interface AvailabilitySlot {
@@ -53,7 +53,32 @@ export class Doctor {
 
   @Prop()
   availability: Availability[];
-  
+
+  @Prop()
+  next_available_slot: string;
+
+  @Prop({
+    default: [
+      { slots: '10:30 AM' },
+      { slots: '11:30 AM' },
+      { slots: '12:30 AM' },
+    ],
+  })
+  available_slot_today: Array<{ slots: string }>;
+
+  @Prop({
+    type: [
+      {
+        user_profile: { type: Types.ObjectId},
+        rating: { type: Number, default: 0 },
+      },
+    ],
+    default: () => [{ user_profile:new Types.ObjectId(), rating: 0 }],
+  })
+  ratings: { user_profile: Types.ObjectId; rating: number }[];
+
+  @Prop({ type: Number, default: 0 })
+  average_rating: number;
 }
 
 export const doctor_schema = SchemaFactory.createForClass(Doctor);
