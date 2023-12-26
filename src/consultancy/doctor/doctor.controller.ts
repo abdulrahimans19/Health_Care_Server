@@ -14,9 +14,12 @@ import { RoleGuard } from 'src/shared/guards';
 import { Gender } from './schema/doctor.schema';
 import { DoctorDto, RateDto } from './dto';
 import { GetProfileId } from 'src/shared/decorators/get-profile-id.decorator';
+
 @Controller('doctor')
 export class DoctorController {
-  constructor(private readonly doctorService: DoctorService) {}
+  constructor(
+    private readonly doctorService: DoctorService,
+  ) { }
 
   @Post('add-doctor')
   @Roles(UserRoles.ADMIN)
@@ -76,5 +79,13 @@ export class DoctorController {
   @Get('top-doctors')
   getTopDoctors() {
     return this.doctorService.getTopDoctors();
+  }
+
+  @Post('add-slots/:doctorId')
+  addDoctorSlots(
+    @Body() dto: any,
+    @Param('doctorId') doctorId: string,
+  ) {
+    return this.doctorService.addDoctorSlots(doctorId, dto);
   }
 }

@@ -2,15 +2,15 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Types, SchemaTypes } from 'mongoose';
 import { MainCategories } from 'src/e-commerce/main-categories/schema/main-categories.schema';
 
-interface AvailabilitySlot {
-  start_time: string;
-  end_time: string;
-}
+// interface AvailabilitySlot {
+//   start_time: string;
+//   end_time: string;
+// }
 
-interface Availability {
-  day: string;
-  slots: AvailabilitySlot[];
-}
+// interface Availability {
+//   day: number;
+//   slots: Types.ObjectId[];
+// }
 
 export enum Gender {
   Male = 'male',
@@ -51,8 +51,10 @@ export class Doctor {
   @Prop()
   experience: number;
 
-  @Prop()
-  availability: Availability[];
+  @Prop({
+    type: [{ type: SchemaTypes.ObjectId, ref: 'Slots' }],
+  })
+  availability: [];
 
   @Prop()
   next_available_slot: string;
