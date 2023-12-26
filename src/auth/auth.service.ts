@@ -41,7 +41,7 @@ export class AuthService {
   async signIn(signInDto: SignInDto) {
     const user = await this.userService.signIn(signInDto);
     const tokens = await this.getTokens(user._id.toString(), user.email);
-    return { tokens };
+    return { tokens, user_role: user.roles };
   }
 
   async signUp(signUpDto: SignUpDto) {
