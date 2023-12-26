@@ -27,14 +27,17 @@ export class ProductService {
     pageSize: number = 10,
     sortBy: string = 'price',
     sortOrder: 'asc' | 'desc' = 'desc',
-    searchKeyword?: string, // Optional search keyword
+    searchKeyword?: string,
   ): Promise<any> {
     const skip = (page - 1) * pageSize;
 
     const query: any = {
       product_type: productType,
-      country_codes: { $in: [country_code, 'all'] },
     };
+
+    if (country_code) {
+      query.country_codes = { $in: [country_code, 'all'] };
+    }
 
     if (searchKeyword) {
       await this.recentSearchService.addToRecentSearch(
@@ -43,8 +46,8 @@ export class ProductService {
         searchKeyword,
       );
       query.$or = [
-        { name: { $regex: searchKeyword, $options: 'i' } }, // Case-insensitive regex search on name
-        { description: { $regex: searchKeyword, $options: 'i' } }, // Case-insensitive regex search on description
+        { name: { $regex: searchKeyword, $options: 'i' } },
+        { description: { $regex: searchKeyword, $options: 'i' } },
       ];
     }
 
@@ -85,11 +88,16 @@ export class ProductService {
       (subCategory) => subCategory,
     );
 
+    const query: any = {
+      sub_category_id: { $in: subCategoryIds },
+    };
+
+    if (country_code) {
+      query.country_codes = { $in: [country_code] };
+    }
+
     const products = await this.productModel
-      .find({
-        sub_category_id: { $in: subCategoryIds },
-        country_codes: { $in: [country_code] },
-      })
+      .find(query)
       .sort({ [sortBy]: sortOrder })
       .skip(skip)
       .limit(pageSize);
@@ -113,11 +121,16 @@ export class ProductService {
   ) {
     const skip = (page - 1) * pageSize;
 
+    const query: any = {
+      sub_category_id: category_id,
+    };
+
+    if (country_code) {
+      query.country_codes = { $in: [country_code, 'all'] };
+    }
+
     const products = await this.productModel
-      .find({
-        sub_category_id: category_id,
-        country_codes: { $in: [country_code, 'all'] },
-      })
+      .find(query)
       .sort({ [sortBy]: sortOrder })
       .skip(skip)
       .limit(pageSize);
