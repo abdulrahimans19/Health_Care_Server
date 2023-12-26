@@ -7,6 +7,7 @@ import { FavouritesModule } from '../favourites/favourites.module';
 import { UserModule } from 'src/user/user.module';
 import { CartModule } from '../cart/cart.module';
 import { MainCategoriesModule } from '../main-categories/main-categories.module';
+import { RecentSearchModule } from '../recent-search/recent-search.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { MainCategoriesModule } from '../main-categories/main-categories.module'
     CartModule,
     MainCategoriesModule,
     UserModule,
+    RecentSearchModule
   ],
   providers: [ProductService],
   controllers: [ProductController],
