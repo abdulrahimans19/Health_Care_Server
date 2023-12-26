@@ -29,6 +29,8 @@ import { PaymentModule } from './payment/payment.module';
 import { DoctorModule } from './consultancy/doctor/doctor.module';
 import { SlotsModule } from './consultancy/slots/slots.module';
 import { AppointmentModule } from './consultancy/appointment/appointment.module';
+import { RecentSearchModule } from './e-commerce/recent-search/recent-search.module';
+import { FitnessModule } from './fitness/fitnessGoal/fitness.module';
 
 @Module({
   imports: [
@@ -65,7 +67,9 @@ import { AppointmentModule } from './consultancy/appointment/appointment.module'
     PaymentModule,
     DoctorModule,
     SlotsModule,
-    AppointmentModule
+    AppointmentModule,
+    RecentSearchModule,
+    FitnessModule
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: AtGuard }],
