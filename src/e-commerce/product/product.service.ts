@@ -7,6 +7,7 @@ import { product_types } from '../types';
 import { FavouritesService } from '../favourites/favourites.service';
 import { CartService } from '../cart/cart.service';
 import { MainCategoriesService } from '../main-categories/main-categories.service';
+import { RecentSearchService } from '../recent-search/recent-search.service';
 
 @Injectable()
 export class ProductService {
@@ -15,6 +16,7 @@ export class ProductService {
     private readonly favouritesService: FavouritesService,
     private readonly mainCategoriesService: MainCategoriesService,
     private readonly cartService: CartService,
+    private readonly recentSearchService: RecentSearchService,
   ) {}
 
   async getProducts(
@@ -35,6 +37,11 @@ export class ProductService {
     };
 
     if (searchKeyword) {
+      await this.recentSearchService.addToRecentSearch(
+        profile_id,
+        productType,
+        searchKeyword,
+      );
       query.$or = [
         { name: { $regex: searchKeyword, $options: 'i' } }, // Case-insensitive regex search on name
         { description: { $regex: searchKeyword, $options: 'i' } }, // Case-insensitive regex search on description
