@@ -28,6 +28,7 @@ import { OrderModule } from './e-commerce/order/order.module';
 import { PaymentModule } from './payment/payment.module';
 import { DoctorModule } from './consultancy/doctor/doctor.module';
 import { RecentSearchModule } from './e-commerce/recent-search/recent-search.module';
+import { FitnessModule } from './fitness/fitnessGoal/fitness.module';
 
 @Module({
   imports: [
@@ -63,7 +64,8 @@ import { RecentSearchModule } from './e-commerce/recent-search/recent-search.mod
     OrderModule,
     PaymentModule,
     DoctorModule,
-    RecentSearchModule
+    RecentSearchModule,
+    FitnessModule
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: AtGuard }],
