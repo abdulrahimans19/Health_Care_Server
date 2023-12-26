@@ -72,6 +72,6 @@ import { FitnessModule } from './fitness/fitnessGoal/fitness.module';
     FitnessModule
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: AtGuard }],
+  providers: [AppService],
 })
 export class AppModule {}

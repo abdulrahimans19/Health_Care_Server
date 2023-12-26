@@ -53,9 +53,12 @@ export class DoctorController {
     return this.doctorService.getDoctorBySearch(search, categoryId);
   }
 
-  @Get('get-doctor-details/:doctorId')
-  getDoctorDetails(@Param('doctorId') doctorId: string) {
-    return this.doctorService.getDoctorDetails(doctorId);
+  @Post('get-doctor-details/:doctorId')
+  getDoctorDetails(
+    @Param('doctorId') doctorId: string,
+    @Body() dto: any
+  ) {
+    return this.doctorService.getDoctorDetails(doctorId, dto);
   }
 
   @Get('get-doctor-by-category')

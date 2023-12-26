@@ -109,11 +109,33 @@ export class DoctorService {
     }
   }
 
-  async getDoctorDetails(doctorId: string) {
+  async getDoctorDetails(doctorId: string,dto:any) {
     try {
-      const getDoctorById = await this.doctorModel.findById({
+      const getDoctorById: any = await this.doctorModel.findById({
         _id: new mongoose.Types.ObjectId(doctorId),
-      });
+      }).populate('availability');
+
+      if (getDoctorById.availability.length) {
+        let next_available_slot = ""
+        const appointment = getDoctorById.availability.map(async (slot: any) => {
+          const slotPresent = await this.appointmentModel.findOne({date: dto.date, doctorId: getDoctorById._id, slotId: (slot as any)._id })
+          if (!next_available_slot && !slotPresent) next_available_slot = (slot as any).start_time;
+          return {
+            _id: (slot as any)._id,
+            start_time: (slot as any).start_time,
+            end_time: (slot as any).end_time,
+            isBooked: slotPresent ? true : false
+          }
+        })
+        const availability = await Promise.all(appointment)
+        return {
+          ...getDoctorById._doc,
+          next_available_slot,
+          availability
+        }
+      }
+
+
       return { getDoctorById };
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
