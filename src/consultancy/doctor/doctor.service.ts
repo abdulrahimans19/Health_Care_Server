@@ -146,7 +146,10 @@ export class DoctorService {
       );
       const actualRatingCount = getDoctor.ratings.length - 1;
       getDoctor.average_rating =
-        actualRatingCount > 0 ? totalRating / actualRatingCount : 0;
+        actualRatingCount > 0
+          ? parseFloat((totalRating / actualRatingCount).toFixed(0))
+          : 0;
+
       await getDoctor.save();
 
       return { message: 'Your rate of experience submitted' };
@@ -155,62 +158,47 @@ export class DoctorService {
     }
   }
 
-  async getTopDoctors(): Promise<Record<string, Doctor[]>> {
+  async getTopDoctors() {
     try {
-      console.log('hi');
-      const topRatedDoctorsByCategory =
-        await this.doctorModel.aggregate<AggregationResult>([
-          {
-            $group: {
-              _id: 'category_id',
-              doctors: { $push: '$$ROOT' },
+      const topRatedDoctorsByCategory = await this.doctorModel.aggregate([
+        {
+          $sort: {
+            category_id: 1,
+            average_rating: -1,
+          },
+        },
+        {
+          $group: {
+            _id: '$category_id',
+            doctors: { $push: '$$ROOT' },
+          },
+        },
+        {
+          $project: {
+            category_id: '$_id',
+            doctors: {
+              $slice: ['$doctors', 2], // Limit to the top 2 doctors for each category
             },
           },
-          {
-            $project: {
-              category_id: '$_id',
-              doctors: {
-                $slice: [
-                  {
-                    $map: {
-                      input: '$doctors',
-                      as: 'doctor',
-                      in: {
-                        _id: '$$doctor._id',
-                        name: '$$doctor.name',
-                        description: '$$doctor.description',
-                        average_rating: '$$doctor.average_rating',
-                      },
-                    },
-                  },
-                  2,
-                ],
-              },
-            },
+        },
+        {
+          $unwind: '$doctors',
+        },
+        {
+          $replaceRoot: { newRoot: '$doctors' },
+        },
+
+        {
+          $sort: {
+            category_id: 1,
+            average_rating: -1,
           },
-        ]);
-      console.log(
-        topRatedDoctorsByCategory.forEach((r) => console.log(r.doctors)),
-      );
+        },
+      ]);
 
-      const result: Record<string, Doctor[]> = {};
-
-      topRatedDoctorsByCategory.forEach((categoryResult) => {
-        const categoryDoctors = categoryResult.doctors.map(
-          (doctor) =>
-            ({
-              _id: doctor.id,
-              name: doctor.name,
-              description: doctor.description,
-              average_rating: doctor.average_rating,
-            } as any),
-        );
-        console.log('hi3');
-        result[categoryResult._id.toHexString()] = categoryDoctors;
-      });
-      console.log('h4');
-      console.log(result);
-      return result;
-    } catch (error) {}
+      return { topRatedDoctorsByCategory };
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
   }
 }
