@@ -42,9 +42,6 @@ export class Doctor {
   @Prop()
   featured: boolean;
 
-  @Prop({ default: 0 })
-  likes: number;
-
   @Prop()
   image: string;
 
@@ -58,15 +55,6 @@ export class Doctor {
 
   @Prop()
   next_available_slot: string;
-
-  @Prop({
-    default: [
-      { slots: '10:30 AM' },
-      { slots: '11:30 AM' },
-      { slots: '12:30 AM' },
-    ],
-  })
-  available_slot_today: Array<{ slots: string }>;
 
   @Prop({
     type: [
