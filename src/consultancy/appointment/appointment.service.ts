@@ -13,15 +13,27 @@ export class AppointmentService {
   async addAppointment(dto: any) {
     try {
       await this.appointmentModel.create(dto);
-      return { message: 'Doctor created.' };
+      return { message: 'Appointment created.' };
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
   }
 
-  async getUserAppointment(patientId: any) {
+  async getUserAppointment({ user_id, status }: any) {
     try {
-      const appointments = await this.appointmentModel.find(patientId).populate("slotId");
+      const appointments = await this.appointmentModel.find({
+        patientId: new mongoose.Types.ObjectId(user_id),
+        status
+      }).populate([
+        {
+          path: 'slotId',
+          select: 'start_time end_time' // Specify the fields you want to populate
+        },
+        {
+          path: 'doctorId',
+          select: '-_id -availability' 
+        }
+      ]);
       return appointments
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);

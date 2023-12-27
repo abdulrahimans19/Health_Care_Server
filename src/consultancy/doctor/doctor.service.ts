@@ -114,7 +114,7 @@ export class DoctorService {
       const getDoctorById: any = await this.doctorModel.findById({
         _id: new mongoose.Types.ObjectId(doctorId),
       }).populate('availability');
-
+     
       if (getDoctorById.availability.length) {
         let next_available_slot = ""
         const appointment = getDoctorById.availability.map(async (slot: any) => {
