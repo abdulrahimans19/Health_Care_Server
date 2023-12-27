@@ -111,7 +111,7 @@ export class DoctorService {
           },
         ],
       };
-      const getDoctorSearch = await this.doctorModel.find(searchQuery);
+      const getDoctorSearch = await this.doctorModel.find(searchQuery).populate('availability')
       return { getDoctorSearch };
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
@@ -120,14 +120,16 @@ export class DoctorService {
 
   async getDoctorDetails(doctorId: string, dto: any) {
     try {
-      const getDoctorById: any = await this.doctorModel.findById({
-        _id: new mongoose.Types.ObjectId(doctorId),
-      }).populate('availability');
-     
+      const getDoctorById: any = await this.doctorModel
+        .findById({
+          _id: new mongoose.Types.ObjectId(doctorId),
+        })
+        .populate('availability');
+
       if (getDoctorById.availability.length) {
         let next_available_slot = '';
         const appointment = getDoctorById.availability.map(
-          async (slot: any) => {
+          async (slot: any) => { 
             const slotPresent = await this.appointmentModel.findOne({
               date: dto.date,
               doctorId: getDoctorById._id,
@@ -290,6 +292,14 @@ export class DoctorService {
             average_rating: -1,
           },
         },
+        {
+          $lookup: {
+            from: 'slots', // Assuming the collection name is 'slots'
+            localField: 'availability',
+            foreignField: '_id',
+            as: 'availability',
+          },
+        },
       ]);
       const today = new Date();
       const formattedToday = `${
@@ -298,31 +308,33 @@ export class DoctorService {
 
       let data = topRatedDoctorsByCategory.map(async (doctor: any) => {
         let next_available_slot = '';
-        if (doctor.availability?.length) {
-          const appointment = doctor.availability.map(async (slot: any) => {
-            const slotPresent = await this.appointmentModel.findOne({
-              date: formattedToday,
-              doctorId: doctor._id,
-              slotId: (slot as any)._id,
-            });
-            console.log(slotPresent);
-            if (!next_available_slot && !slotPresent)
-              next_available_slot = (slot as any).start_time;
-            return {
-              _id: (slot as any)._id,
-              start_time: (slot as any).start_time,
-              end_time: (slot as any).end_time,
-              isBooked: slotPresent ? true : false,
-            };
-          });
+        if (doctor.availability.length) {
+          const appointment = doctor.availability.map(
+            async (slot: any, index: any) => {
+              const slotPresent = await this.appointmentModel.findOne({
+                date: formattedToday,
+                doctorId: doctor._id,
+                slotId: (slot as any)._id,
+              });
+              if (!next_available_slot && !slotPresent)
+                next_available_slot = (slot as any).start_time;
+              return {
+                _id: (slot as any)._id,
+                start_time: (slot as any).start_time,
+                end_time: (slot as any).end_time,
+                isBooked: slotPresent ? true : false,
+              };
+            },
+          );
           const availability = await Promise.all(appointment);
           return {
-            ...doctor._doc,
+            ...doctor,
             next_available_slot,
             availability,
           };
         }
       });
+      data = await Promise.all(data);
 
       return { data };
     } catch (error) {
