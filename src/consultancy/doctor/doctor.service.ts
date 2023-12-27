@@ -9,6 +9,7 @@ import { DoctorDto, RateDto } from './dto/doctor.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Doctor, Gender } from './schema/doctor.schema';
 import mongoose, { Model } from 'mongoose';
+import { Appointment } from '../appointment/schema/appointment.schema';
 
 type AggregationResult = {
   _id: mongoose.Types.ObjectId;
@@ -19,8 +20,9 @@ type AggregationResult = {
 export class DoctorService {
   constructor(
     @InjectModel(Doctor.name) private readonly doctorModel: Model<Doctor>,
-  ) {}
-  async addDoctor(dto: DoctorDto) {
+    @InjectModel(Appointment.name) private readonly appointmentModel: Model<Appointment>,
+  ) { }
+  async addDoctor(dto: any) {
     try {
       await this.doctorModel.create(dto);
       return { message: 'Doctor created.' };
@@ -53,13 +55,37 @@ export class DoctorService {
 
       const skip = (page - 1) * pageSize;
 
-      const doctors = await this.doctorModel
-        .find(query)
+      const doctors = await this.doctorModel.find(query).populate('availability')
         .skip(skip)
         .limit(pageSize)
         .exec();
 
-      return { doctors };
+      const today = new Date();
+      const formattedToday = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
+
+      let data = doctors.map(async (doctor: any) => {
+        let next_available_slot = ""
+        if (doctor.availability.length) {
+          const appointment = doctor.availability.map(async (slot: any) => {
+            const slotPresent = await this.appointmentModel.findOne({ date: formattedToday, doctorId: doctor._id, slotId: (slot as any)._id })
+            if (!next_available_slot && !slotPresent) next_available_slot = (slot as any).start_time;
+            return {
+              _id: (slot as any)._id,
+              start_time: (slot as any).start_time,
+              end_time: (slot as any).end_time,
+              isBooked: slotPresent ? true : false
+            }
+          })
+          const availability = await Promise.all(appointment)
+          return {
+            ...doctor._doc,
+            next_available_slot,
+            availability
+          }
+        }
+      })
+      data = await Promise.all(data);
+      return data;
     } catch (error) {
       console.log(error);
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
@@ -83,11 +109,33 @@ export class DoctorService {
     }
   }
 
-  async getDoctorDetails(doctorId: string) {
+  async getDoctorDetails(doctorId: string,dto:any) {
     try {
-      const getDoctorById = await this.doctorModel.findById({
+      const getDoctorById: any = await this.doctorModel.findById({
         _id: new mongoose.Types.ObjectId(doctorId),
-      });
+      }).populate('availability');
+
+      if (getDoctorById.availability.length) {
+        let next_available_slot = ""
+        const appointment = getDoctorById.availability.map(async (slot: any) => {
+          const slotPresent = await this.appointmentModel.findOne({date: dto.date, doctorId: getDoctorById._id, slotId: (slot as any)._id })
+          if (!next_available_slot && !slotPresent) next_available_slot = (slot as any).start_time;
+          return {
+            _id: (slot as any)._id,
+            start_time: (slot as any).start_time,
+            end_time: (slot as any).end_time,
+            isBooked: slotPresent ? true : false
+          }
+        })
+        const availability = await Promise.all(appointment)
+        return {
+          ...getDoctorById._doc,
+          next_available_slot,
+          availability
+        }
+      }
+
+
       return { getDoctorById };
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
@@ -198,12 +246,12 @@ export class DoctorService {
       topRatedDoctorsByCategory.forEach((categoryResult) => {
         const categoryDoctors = categoryResult.doctors.map(
           (doctor) =>
-            ({
-              _id: doctor.id,
-              name: doctor.name,
-              description: doctor.description,
-              average_rating: doctor.average_rating,
-            } as any),
+          ({
+            _id: doctor.id,
+            name: doctor.name,
+            description: doctor.description,
+            average_rating: doctor.average_rating,
+          } as any),
         );
         console.log('hi3');
         result[categoryResult._id.toHexString()] = categoryDoctors;
@@ -211,6 +259,17 @@ export class DoctorService {
       console.log('h4');
       console.log(result);
       return result;
-    } catch (error) {}
+    } catch (error) { }
+  }
+
+  async addDoctorSlots(doctorId: string, dto: any) {
+    try {
+      let doctor = await this.doctorModel.findById(doctorId);
+      console.log("doctor", doctor)
+      let upddoctor = await this.doctorModel.findByIdAndUpdate(doctorId, { $push: { availability: dto.slotId } })
+      return { message: 'Doctor slots updated.' };
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
   }
 }
