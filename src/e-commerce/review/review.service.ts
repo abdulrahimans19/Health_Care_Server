@@ -28,6 +28,7 @@ export class ReviewService {
       .find({
         product_id: new Types.ObjectId(product_id),
       })
+      .populate('profile_id')
       .sort({ created_at: -1 })
       .skip(skip)
       .limit(pageSize);
