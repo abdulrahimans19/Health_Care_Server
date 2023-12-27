@@ -2,10 +2,11 @@ import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt/dist';
 import * as schedule from 'node-schedule';
 import * as bcrypt from 'bcrypt';
-import { SignInDto, SignUpDto } from './dto';
+import { ChangePasswordDto, SignInDto, SignUpDto } from './dto';
 import { MailService } from 'src/mail/mail.service';
 import { generateOTP } from 'src/shared/utils/utils';
 import { UserService } from 'src/user/user.service';
+import { JwtPayload } from './strategies';
 
 const OTP_EXPIRATION_TIME = 10 * 60 * 1000;
 
@@ -100,6 +101,20 @@ export class AuthService {
     this.scheduleOtpReset(email);
 
     return await this.mailService.sendEmailOtpForVerification(email, otp);
+  }
+
+  async changePassword(user: JwtPayload, dto: ChangePasswordDto) {
+    const userData = await this.userService.getUserById(user.sub);
+    const validPassword = await bcrypt.compare(
+      dto.oldPassword,
+      userData.password,
+    );
+    
+    if (!validPassword) throw new UnauthorizedException('Invalid Password');
+
+    await this.userService.updatePassword(user.email, dto.newPassword);
+
+    return { message: 'Password Updated' };
   }
 
   private scheduleOtpReset(email: string): void {
