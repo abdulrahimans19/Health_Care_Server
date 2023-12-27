@@ -127,9 +127,7 @@ export class OrderService {
         // Create payment ID based on the selected payment mode
         let payment_id;
         if (dto.payment_mode === 'PAYPAL') {
-          payment_id = await this.paymentService.createPaypalOrder(
-            payable_total_amount, // Use payable_total_amount for PayPal
-          );
+          payment_id = null;
         } else {
           payment_id = await this.paymentService.createStripeOrder(
             user.email,
@@ -151,9 +149,11 @@ export class OrderService {
           const discountedAmount = productTotalAmount - discountAmount;
 
           // Update product quantity and product_sold fields
-          cartProduct.product.quantity -= cartProduct.quantity;
-          cartProduct.product.product_sold += cartProduct.quantity;
-          await cartProduct.product.save();
+          if (dto.payment_mode === 'PAYPAL') {
+            cartProduct.product.quantity -= cartProduct.quantity;
+            cartProduct.product.product_sold += cartProduct.quantity;
+            await cartProduct.product.save();
+          }
 
           // Create and return an order document
           return this.orderModel.create(
@@ -167,7 +167,10 @@ export class OrderService {
                 real_total_amount: realTotalAmount,
                 discounted_amount: discountAmount,
                 address_id: dto.address_id,
-                order_status: OrderStatus.PENDING,
+                order_status:
+                  dto.payment_mode === 'STRIPE'
+                    ? OrderStatus.PENDING
+                    : OrderStatus.CREATED,
                 product_type,
               },
             ],
@@ -192,9 +195,7 @@ export class OrderService {
         // If no coupon, proceed without discounts
         let payment_id;
         if (dto.payment_mode === 'PAYPAL') {
-          payment_id = await this.paymentService.createPaypalOrder(
-            total_amount,
-          );
+          payment_id = null;
         } else {
           payment_id = await this.paymentService.createStripeOrder(
             user.email,
@@ -210,6 +211,13 @@ export class OrderService {
           const realTotalAmount = totalAmount;
           const discountedAmount = totalAmount;
 
+          // Update product quantity and product_sold fields
+          if (dto.payment_mode === 'PAYPAL') {
+            cartProduct.product.quantity -= cartProduct.quantity;
+            cartProduct.product.product_sold += cartProduct.quantity;
+            await cartProduct.product.save();
+          }
+
           // Create and return an order document
           return this.orderModel.create(
             [
@@ -222,7 +230,10 @@ export class OrderService {
                 real_total_amount: realTotalAmount,
                 discounted_amount: discountedAmount,
                 address_id: dto.address_id,
-                order_status: OrderStatus.PENDING,
+                order_status:
+                  dto.payment_mode === 'STRIPE'
+                    ? OrderStatus.PENDING
+                    : OrderStatus.CREATED,
                 product_type,
               },
             ],
