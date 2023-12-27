@@ -120,12 +120,10 @@ export class DoctorService {
 
   async getDoctorDetails(doctorId: string, dto: any) {
     try {
-      const getDoctorById: any = await this.doctorModel
-        .findById({
-          _id: new mongoose.Types.ObjectId(doctorId),
-        })
-        .populate('availability');
-
+      const getDoctorById: any = await this.doctorModel.findById({
+        _id: new mongoose.Types.ObjectId(doctorId),
+      }).populate('availability');
+     
       if (getDoctorById.availability.length) {
         let next_available_slot = '';
         const appointment = getDoctorById.availability.map(
