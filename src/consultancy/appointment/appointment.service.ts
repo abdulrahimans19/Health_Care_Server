@@ -21,7 +21,7 @@ export class AppointmentService {
 
   async getUserAppointment(patientId: any) {
     try {
-      const appointments = await this.appointmentModel.find(patientId);
+      const appointments = await this.appointmentModel.find(patientId).populate("slotId");
       return appointments
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
@@ -30,7 +30,7 @@ export class AppointmentService {
 
   async getDoctorAppointment(doctorId: any) {
     try {
-      const appointments = await this.appointmentModel.find(doctorId);
+      const appointments = await this.appointmentModel.find(doctorId).populate("slotId");
       return appointments
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);

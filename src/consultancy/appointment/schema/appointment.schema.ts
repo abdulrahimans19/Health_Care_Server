@@ -24,6 +24,15 @@ export class Appointment {
   @Prop()
   time: string;
 
+  @Prop()
+  description: string;
+
+  @Prop()
+  image: string;
+
+  @Prop({ default: false })
+  isCompleted: boolean;
+
   @Prop({ type: SchemaTypes.ObjectId, ref: Slots.name, index: true, required: true })
   slotId: Types.ObjectId;
 }
