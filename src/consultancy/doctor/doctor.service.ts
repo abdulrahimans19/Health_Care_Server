@@ -61,7 +61,6 @@ export class DoctorService {
 
       return { doctors };
     } catch (error) {
-      console.log(error);
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
   }
@@ -187,7 +186,6 @@ export class DoctorService {
         {
           $replaceRoot: { newRoot: '$doctors' },
         },
-
         {
           $sort: {
             category_id: 1,
