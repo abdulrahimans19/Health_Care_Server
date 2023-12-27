@@ -8,9 +8,10 @@ import {
 import { Types } from 'mongoose';
 
 export class AppointmentDto {
-  @IsString()
+
+  @IsMongoId()
   @IsNotEmpty()
-  name: string;
+  slotId: string;
 
   @IsString()
   @IsNotEmpty()
@@ -23,15 +24,7 @@ export class AppointmentDto {
   @IsMongoId()
   @IsNotEmpty()
   patientId: Types.ObjectId;
-
-  @IsNotEmpty()
-  featured: boolean;
-
-  @IsNotEmpty()
-  @IsString()
-  date: string;
-
-  @IsNotEmpty()
-  @IsString()
-  time: number;
 }
+
+
+export type AppointmentStatus = 'upcoming' | 'completed';
