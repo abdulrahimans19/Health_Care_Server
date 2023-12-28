@@ -32,4 +32,17 @@ export class SlotService {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
   }
+ async  getTimeSlots(){
+    try {
+    const slots=await this.slotsModel.find()
+
+return slots
+
+
+    } catch (error) {
+throw error    
+    }
+  }
+
+
 }
