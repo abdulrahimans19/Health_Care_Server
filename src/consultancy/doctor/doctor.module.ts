@@ -11,6 +11,7 @@ import { UserModule } from 'src/user/user.module';
     UserModule
   ],
   controllers: [DoctorController],
-  providers: [DoctorService]
+  providers: [DoctorService],
+  exports:[DoctorService]
 })
 export class DoctorModule {}

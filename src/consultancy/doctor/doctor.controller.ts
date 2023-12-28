@@ -8,12 +8,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { DoctorService } from './doctor.service';
-import { Roles } from 'src/shared/decorators';
+import { GetUser, Roles } from 'src/shared/decorators';
 import { UserRoles } from 'src/user/schema/user.schema';
 import { RoleGuard } from 'src/shared/guards';
 import { Gender } from './schema/doctor.schema';
 import { DoctorDto, RateDto } from './dto';
 import { GetProfileId } from 'src/shared/decorators/get-profile-id.decorator';
+import { JwtPayload } from 'src/auth/strategies';
+import { DoctorUpdateDto } from './dto/doctor-update.dto';
 @Controller('doctor')
 export class DoctorController {
   constructor(private readonly doctorService: DoctorService) {}
@@ -76,5 +78,10 @@ export class DoctorController {
   @Get('top-doctors')
   getTopDoctors() {
     return this.doctorService.getTopDoctors();
+  }
+
+  @Post('update-doctor')
+  updateDoctor(@GetUser() user: JwtPayload, @Body() updateData: DoctorUpdateDto){
+    return this.doctorService.updateDoctor(user, updateData)
   }
 }

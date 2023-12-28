@@ -14,10 +14,16 @@ export enum Gender {
   },
 })
 export class Doctor {
-  @Prop({ required: true })
+  @Prop()
   name: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true, index: true })
+  email:string;
+
+  @Prop({ type: String })
+  password: string;
+
+  @Prop()
   description: string;
 
   @Prop()
