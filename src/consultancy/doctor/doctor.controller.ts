@@ -16,9 +16,12 @@ import { DoctorDto, RateDto } from './dto';
 import { GetProfileId } from 'src/shared/decorators/get-profile-id.decorator';
 import { JwtPayload } from 'src/auth/strategies';
 import { DoctorUpdateDto } from './dto/doctor-update.dto';
+
 @Controller('doctor')
 export class DoctorController {
-  constructor(private readonly doctorService: DoctorService) {}
+  constructor(
+    private readonly doctorService: DoctorService,
+  ) { }
 
   @Post('add-doctor')
   @Roles(UserRoles.ADMIN)
@@ -52,9 +55,12 @@ export class DoctorController {
     return this.doctorService.getDoctorBySearch(search, categoryId);
   }
 
-  @Get('get-doctor-details/:doctorId')
-  getDoctorDetails(@Param('doctorId') doctorId: string) {
-    return this.doctorService.getDoctorDetails(doctorId);
+  @Post('get-doctor-details/:doctorId')
+  getDoctorDetails(
+    @Param('doctorId') doctorId: string,
+    @Body() dto: any
+  ) {
+    return this.doctorService.getDoctorDetails(doctorId, dto);
   }
 
   @Get('get-doctor-by-category')
@@ -82,6 +88,15 @@ export class DoctorController {
 
   @Post('update-doctor')
   updateDoctor(@GetUser() user: JwtPayload, @Body() updateData: DoctorUpdateDto){
-    return this.doctorService.updateDoctor(user, updateData)
+    return this.doctorService.updateDoctor(user, updateData) 
   }
+  
+  @Post('add-slots/:doctorId')
+  addDoctorSlots(
+    @Body() dto: any,
+    @Param('doctorId') doctorId: string,
+  ) {
+    return this.doctorService.addDoctorSlots(doctorId, dto);
+  }
+
 }

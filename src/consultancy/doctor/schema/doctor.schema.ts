@@ -1,10 +1,21 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { double } from 'aws-sdk/clients/lightsail';
 import mongoose, { Types, SchemaTypes } from 'mongoose';
 import { MainCategories } from 'src/e-commerce/main-categories/schema/main-categories.schema';
 
+// interface AvailabilitySlot {
+//   start_time: string;
+//   end_time: string;
+// }
+
+// interface Availability {
+//   day: number;
+//   slots: Types.ObjectId[];
+// }
+
 export enum Gender {
   Male = 'male',
-  Female = 'female',
+  Female = 'female'
 }
 
 @Schema({
@@ -38,35 +49,28 @@ export class Doctor {
   @Prop()
   featured: boolean;
 
-  @Prop({ default: 0 })
-  likes: number;
-
   @Prop()
   image: string;
 
   @Prop()
   experience: number;
 
+  @Prop({
+    type: [{ type: SchemaTypes.ObjectId, ref: 'Slots' }],
+  })
+  availability: [];
+
   @Prop()
   next_available_slot: string;
 
   @Prop({
-    default: [
-      { slots: '10:30 AM' },
-      { slots: '11:30 AM' },
-      { slots: '12:30 AM' },
-    ],
-  })
-  available_slot_today: Array<{ slots: string }>;
-
-  @Prop({
     type: [
       {
-        user_profile: { type: Types.ObjectId},
+        user_profile: { type: Types.ObjectId },
         rating: { type: Number, default: 0 },
       },
     ],
-    default: () => [{ user_profile:new Types.ObjectId(), rating: 0 }],
+    default: () => [{ user_profile: new Types.ObjectId(), rating: 0 }],
   })
   ratings: { user_profile: Types.ObjectId; rating: number }[];
 
