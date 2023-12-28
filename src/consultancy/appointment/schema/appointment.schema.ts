@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types, SchemaTypes } from 'mongoose';
 import { Doctor } from 'src/consultancy/doctor/schema/doctor.schema';
 import { Slots } from 'src/consultancy/slots/schema/slots.schema';
+import { UserProfile } from 'src/user-profile/schema/user-profile.schema';
 import { User } from 'src/user/schema/user.schema';
 
 enum Status{
@@ -19,7 +20,7 @@ export class Appointment {
   @Prop({ type: SchemaTypes.ObjectId, ref: Doctor.name, index: true, required: true })
   doctorId: Types.ObjectId;
 
-  @Prop({ type: SchemaTypes.ObjectId, ref: User.name, index: true, required: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: UserProfile.name, index: true, required: true })
   patientId: Types.ObjectId;
 
   @Prop({
