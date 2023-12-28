@@ -30,6 +30,20 @@ export class AuthController {
   }
 
   @Public()
+  @Post('/doctor/sign-up')
+  @HttpCode(HttpStatus.OK)
+  doctorSignup(@Body() dto: SignUpDto) {
+    return this.authService.doctorSignUp(dto);
+  }
+
+  @Public()
+  @Post('/doctor/sign-in')
+  @HttpCode(HttpStatus.OK)
+  doctorSignIn(@Body() dto: SignInDto) {
+    return this.authService.doctorSignIn(dto);
+  }
+
+  @Public()
   @HttpCode(HttpStatus.OK)
   @Post('/forgot-password')
   forgotPassword(@Body() dto: PasswordResetDto) {

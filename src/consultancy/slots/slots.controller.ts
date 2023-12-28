@@ -17,6 +17,12 @@ export class SlotsController {
   constructor(private readonly slotService: SlotService) {}
 
   // @Global()
+
+  @Get('time-slots')
+  getTimeSlots() {
+    return this.slotService.getTimeSlots();
+  }
+
   @Post('/')
   // @Roles(UserRoles.ADMIN)
   // @UseGuards(RoleGuard)
@@ -30,5 +36,4 @@ export class SlotsController {
   deleteSlot(@Param('id') slotId: string) {
     return this.slotService.deleteSlot(slotId);
   }
- 
 }
