@@ -18,11 +18,10 @@ export class SlotsController {
 
   // @Global()
 
-@Get("time-slots")
-getTimeSlots(){
-return this.slotService.getTimeSlots()
-
-}
+  @Get('time-slots')
+  getTimeSlots() {
+    return this.slotService.getTimeSlots();
+  }
 
   @Post('/')
   // @Roles(UserRoles.ADMIN)
@@ -37,5 +36,4 @@ return this.slotService.getTimeSlots()
   deleteSlot(@Param('id') slotId: string) {
     return this.slotService.deleteSlot(slotId);
   }
- 
 }

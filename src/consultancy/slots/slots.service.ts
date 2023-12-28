@@ -26,23 +26,19 @@ export class SlotService {
 
   async deleteSlot(dto: string) {
     try {
-      await this.slotsModel.deleteOne({_id:dto});
+      await this.slotsModel.deleteOne({ _id: dto });
       return { message: 'Slots Deleted.' };
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
   }
- async  getTimeSlots(){
+  async getTimeSlots() {
     try {
-    const slots=await this.slotsModel.find()
+      const slots = await this.slotsModel.find();
 
-return slots
-
-
+      return slots;
     } catch (error) {
-throw error    
+      throw error;
     }
   }
-
-
 }
