@@ -4,11 +4,16 @@ import {
   HttpStatus,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { DoctorDto, RateDto } from './dto/doctor.dto';
 import { InjectModel } from '@nestjs/mongoose';
+import * as bcrypt from 'bcrypt';
 import { Doctor, Gender } from './schema/doctor.schema';
 import mongoose, { Model } from 'mongoose';
+import { SignInDto, SignUpDto } from 'src/auth/dto';
+import { DoctorUpdateDto } from './dto/doctor-update.dto';
+import { JwtPayload } from 'src/auth/strategies';
 import { Appointment } from '../appointment/schema/appointment.schema';
 
 type AggregationResult = {
@@ -30,6 +35,44 @@ export class DoctorService {
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
+  }
+
+  async signUp(signUpDto: SignUpDto): Promise<Doctor> {
+
+    const hashedPassword = await bcrypt.hash(signUpDto.password, 10);
+    const existingDoctor = await this.doctorModel.findOne({
+      email: signUpDto.email,
+    });
+
+    
+
+    if (existingDoctor) {
+        throw new ConflictException('Email is already in use'); 
+    } else {
+      const newDoctor = await this.doctorModel.create({
+        email: signUpDto.email,
+        password: hashedPassword,
+      });
+
+      return newDoctor;
+    }
+  }
+
+  async signIn(signInDto: SignInDto): Promise<Doctor> {
+    const { email, password } = signInDto;
+
+    const doctor = await this.doctorModel.findOne({ email });
+
+    if (!doctor) {
+      throw new UnauthorizedException('Doctor not found');
+    }
+    const isPasswordValid = await bcrypt.compare(password, doctor.password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid password');
+    }
+
+    return doctor;
   }
 
   async getDoctor(
@@ -342,4 +385,30 @@ export class DoctorService {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
   }
+  async updateDoctor(user:JwtPayload, doctorData: DoctorUpdateDto) {
+    const {  name, description, category_id, about, image, experience, gender } = doctorData;
+
+    const updatedDoctor = await this.doctorModel.findOneAndUpdate(
+      { _id: user.sub },
+      {
+        $set: {
+          name,
+          description,
+          category_id,
+          about,
+          ...(image && { image }),
+          experience,
+          gender,
+        },
+      },
+      { new: true } // Return the updated document
+    );
+  
+    if (!updatedDoctor) {
+      throw new Error(`Something went wrong!`);
+    }
+  
+    return updatedDoctor;
+  }
+  
 }
