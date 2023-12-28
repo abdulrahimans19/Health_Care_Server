@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { double } from 'aws-sdk/clients/lightsail';
 import mongoose, { Types, SchemaTypes } from 'mongoose';
 import { MainCategories } from 'src/e-commerce/main-categories/schema/main-categories.schema';
 
@@ -24,10 +25,16 @@ export enum Gender {
   },
 })
 export class Doctor {
-  @Prop({ required: true })
+  @Prop()
   name: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true, index: true })
+  email:string;
+
+  @Prop({ type: String })
+  password: string;
+
+  @Prop()
   description: string;
 
   @Prop()
@@ -59,11 +66,11 @@ export class Doctor {
   @Prop({
     type: [
       {
-        user_profile: { type: Types.ObjectId},
+        user_profile: { type: Types.ObjectId },
         rating: { type: Number, default: 0 },
       },
     ],
-    default: () => [{ user_profile:new Types.ObjectId(), rating: 0 }],
+    default: () => [{ user_profile: new Types.ObjectId(), rating: 0 }],
   })
   ratings: { user_profile: Types.ObjectId; rating: number }[];
 

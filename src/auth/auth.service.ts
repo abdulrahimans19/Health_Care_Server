@@ -7,6 +7,7 @@ import { MailService } from 'src/mail/mail.service';
 import { generateOTP } from 'src/shared/utils/utils';
 import { UserService } from 'src/user/user.service';
 import { JwtPayload } from './strategies';
+import { DoctorService } from 'src/consultancy/doctor/doctor.service';
 
 const OTP_EXPIRATION_TIME = 10 * 60 * 1000;
 
@@ -19,6 +20,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
     private readonly userService: UserService,
+    private readonly doctorService: DoctorService,
   ) {}
 
   async getTokens(userId: string, email: string) {
@@ -54,6 +56,19 @@ export class AuthService {
 
     return await this.mailService.sendEmailOtpForVerification(user.email, otp);
   }
+
+  async doctorSignIn(signInDto: SignInDto) {
+    const doctor:any = await this.doctorService.signIn(signInDto);
+    const tokens = await this.getTokens(doctor._id, doctor.email);
+    return { tokens, user_role: 'doctor' };
+  }
+
+
+  async doctorSignUp(signUpDto: SignUpDto) {
+    const doctor = await this.doctorService.signUp(signUpDto);
+    return doctor;
+  }
+
 
   async forgotPassword(email: string) {
     const user = await this.userService.getUserByEmail(email);
