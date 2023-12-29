@@ -49,6 +49,7 @@ export class ReviewService {
     }
 
     const orderExist = await this.orderModel.findOne({
+      _id: dto.order_id,
       profile_id,
       product_id: dto.product_id,
     });
