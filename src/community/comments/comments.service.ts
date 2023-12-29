@@ -175,16 +175,20 @@ export class CommentsService {
       });
 
       const isLiked = comment.people_liked.get(profile_id);
-
+      let val = '';
       if (isLiked) {
         comment.people_liked.delete(profile_id);
       } else {
+        val = 'liked';
         comment.people_liked.set(profile_id, true);
       }
 
       const updatedComment = await this.commentModel.findByIdAndUpdate(
         { _id: new mongoose.Types.ObjectId(id) },
-        { people_liked: comment.people_liked },
+        {
+          $set: { people_liked: comment.people_liked },
+          $inc: val === 'liked' ? { total_likes: 1 } : { total_likes: -1 },
+        },
         { new: true },
       );
       return { message: 'comment was liked' };
