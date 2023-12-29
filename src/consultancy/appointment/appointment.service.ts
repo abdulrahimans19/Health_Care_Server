@@ -19,7 +19,7 @@ export class AppointmentService {
     }
   }
 
-  async getUserAppointment({ user_id, status,profile_id }: any) {
+  async getUserAppointment({ user_id, status, profile_id }: any) {
     try {
       const appointments = await this.appointmentModel.find({
         patientId: new mongoose.Types.ObjectId(profile_id),
@@ -31,7 +31,7 @@ export class AppointmentService {
         },
         {
           path: 'doctorId',
-          select: '-_id -availability' 
+          select: '-_id -availability'
         }
       ]);
       return appointments
@@ -44,6 +44,20 @@ export class AppointmentService {
     try {
       const appointments = await this.appointmentModel.find(doctorId).populate("slotId");
       return appointments
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async updateAppointmentStatus(dto: any) {
+    try {
+      const appointment = await this.appointmentModel.findById(dto._id)
+      if (appointment.status == "completed") {
+        return { message: 'Already completed.' }
+      } else {
+        await this.appointmentModel.findByIdAndUpdate(dto._id, { $set: { status: 'completed' } })
+      }
+      return { message: 'Appointment updated.' }
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
