@@ -307,15 +307,15 @@ export class OrderService {
   ) {
     let payment_status: boolean = true;
 
-    if (dto.payment_mode === 'STRIPE') {
-      payment_status = await this.paymentService.validateStripeOrder(
-        dto.payment_id,
-      );
-    } else {
-      payment_status = await this.paymentService.validatePaypalPayment(
-        dto.payment_id,
-      );
-    }
+    // if (dto.payment_mode === 'STRIPE') {
+    //   payment_status = await this.paymentService.validateStripeOrder(
+    //     dto.payment_id,
+    //   );
+    // } else {
+    //   payment_status = await this.paymentService.validatePaypalPayment(
+    //     dto.payment_id,
+    //   );
+    // }
 
     if (payment_status) {
       // Update order status to SHIPPED
