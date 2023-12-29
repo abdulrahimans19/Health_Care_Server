@@ -109,16 +109,21 @@ export class PostService {
       const post = await this.postModel.findById(post_id);
 
       const isLiked = post.people_liked.get(profile_id);
+      let val = '';
       console.log(isLiked);
       if (isLiked) {
         post.people_liked.delete(profile_id);
       } else {
+        val = 'liked';
         post.people_liked.set(profile_id, true);
       }
 
       const updatedPost = await this.postModel.findByIdAndUpdate(
         post_id,
-        { people_liked: post.people_liked },
+        {
+          $set: { people_liked: post.people_liked },
+          $inc: val === 'liked' ? { total_liked: 1 } : { total_liked: -1 },
+        },
         { new: true },
       );
 
