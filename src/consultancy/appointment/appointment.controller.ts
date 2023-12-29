@@ -41,4 +41,11 @@ export class AppointmentController {
   getDoctorAppointment(@Body() userId: string) {
     return this.appointmentService.getDoctorAppointment(userId);
   }
+
+  @Post('update-appointment-status')
+  // @Roles(UserRoles.ADMIN)
+  // @UseGuards(RoleGuard)
+  updateAppointmentStatus(@Body() dto: string) {
+    return this.appointmentService.updateAppointmentStatus(dto);
+  }
 }
