@@ -9,6 +9,8 @@ import { CommentDto, deleteCommentDto, getCommentDto } from './dto/post.dto';
 import { UserPost } from '../post/schema/post.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { UserPostComments } from './schema/comments.schema';
+import { get } from 'http';
+import { profile } from 'console';
 
 @Injectable()
 export class CommentsService {
@@ -105,7 +107,7 @@ export class CommentsService {
       throw new HttpException(error, HttpStatus.BAD_GATEWAY);
     }
   }
-  
+
   async deleteComments(dto: deleteCommentDto, profile_id) {
     try {
       console.log(profile_id, dto.comment_id);
@@ -135,35 +137,55 @@ export class CommentsService {
 
   async likeComment(profile_id: string, id: string) {
     try {
-      const findComment = await this.commentModel.findOne({
+      // console.log(profile_id,id);
+      // const findComment = await this.commentModel.findOne({
+      //   _id: new mongoose.Types.ObjectId(id),
+      //   is_deleted: false,
+      // });
+      // console.log(findComment);
+      // if (!findComment) {
+      //   throw new HttpException(
+      //     'comment was not found',
+      //     HttpStatus.BAD_GATEWAY,
+      //   );
+      // }
+      // const likedComment = await this.commentModel.findOne({
+      //   _id: new mongoose.Types.ObjectId(id),
+      //   is_deleted: false,
+      //   people_liked: new mongoose.Types.ObjectId(profile_id),
+      // });
+
+      // if (likedComment) {
+      //   throw new HttpException(
+      //     'already liked this post',
+      //     HttpStatus.BAD_GATEWAY,
+      //   );
+      // }
+      // await this.commentModel.findOneAndUpdate(
+      //   { _id: new mongoose.Types.ObjectId(id), is_deleted: false },
+      //   {
+      //     $push: { people_liked: new mongoose.Types.ObjectId(profile_id) },
+      //     $inc: { total_likes: 1 },
+      //   },
+      // );
+
+      const comment = await this.commentModel.findOne({
         _id: new mongoose.Types.ObjectId(id),
         is_deleted: false,
       });
-      if (!findComment) {
-        throw new HttpException(
-          'comment was not found',
-          HttpStatus.BAD_GATEWAY,
-        );
+
+      const isLiked = comment.people_liked.get(profile_id);
+
+      if (isLiked) {
+        comment.people_liked.delete(profile_id);
+      } else {
+        comment.people_liked.set(profile_id, true);
       }
 
-      const likedComment = await this.commentModel.findOne({
-        _id: new mongoose.Types.ObjectId(id),
-        is_deleted: false,
-        people_liked: new mongoose.Types.ObjectId(profile_id),
-      });
-
-      if (likedComment) {
-        throw new HttpException(
-          'already liked this post',
-          HttpStatus.BAD_GATEWAY,
-        );
-      }
-      await this.commentModel.findOneAndUpdate(
-        { _id: new mongoose.Types.ObjectId(id), is_deleted: false },
-        {
-          $push: { people_liked: new mongoose.Types.ObjectId(profile_id) },
-          $inc: { total_likes: 1 },
-        },
+      const updatedComment = await this.commentModel.findByIdAndUpdate(
+        { _id: new mongoose.Types.ObjectId(id) },
+        { people_liked: comment.people_liked },
+        { new: true },
       );
       return { message: 'comment was liked' };
     } catch (error) {

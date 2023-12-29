@@ -19,10 +19,10 @@ export class AppointmentService {
     }
   }
 
-  async getUserAppointment({ user_id, status }: any) {
+  async getUserAppointment({ user_id, status,profile_id }: any) {
     try {
       const appointments = await this.appointmentModel.find({
-        patientId: new mongoose.Types.ObjectId(user_id),
+        patientId: new mongoose.Types.ObjectId(profile_id),
         status
       }).populate([
         {
