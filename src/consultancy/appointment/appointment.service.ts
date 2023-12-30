@@ -31,7 +31,10 @@ export class AppointmentService {
         },
         {
           path: 'doctorId',
-          select: '-_id -availability'
+          select: '-availability'
+        },
+        {
+          path: 'patientId'
         }
       ]);
       return appointments
