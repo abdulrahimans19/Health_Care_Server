@@ -249,6 +249,18 @@ export class OrderService {
         const discountAmount = 0;
         total_amount = total_amount - discountAmount;
 
+        await this.cartModel.updateOne(
+          { profile_id },
+          {
+            $set: {
+              [product_type === product_types.PHARMA
+                ? 'pharma_products'
+                : 'food_products']: [],
+            },
+          },
+          { session } as { session: ClientSession },
+        );
+
         // Commit the transaction
         await session.commitTransaction();
         session.endSession();
