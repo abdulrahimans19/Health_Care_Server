@@ -68,6 +68,7 @@ export class DoctorController {
     @Query('categoryId') categoryId: string,
     @Query('page') page?: number,
     @Query('pageSize') pageSize?: number,
+    // @Query('today') today?: boolean,
   ) {
     return this.doctorService.getDoctorByCategory(categoryId, page, pageSize);
   }
