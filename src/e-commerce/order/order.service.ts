@@ -181,6 +181,18 @@ export class OrderService {
         // Execute all order creation promises in parallel
         const orders = await Promise.all(orderPromises);
 
+        await this.cartModel.updateOne(
+          { profile_id },
+          {
+            $set: {
+              [product_type === product_types.PHARMA
+                ? 'pharma_products'
+                : 'food_products']: [],
+            },
+          },
+          { session } as { session: ClientSession },
+        );
+
         // Commit the transaction
         await session.commitTransaction();
         session.endSession();
@@ -248,6 +260,18 @@ export class OrderService {
         total_amount = calculateTotalPrice(cart[cartField]);
         const discountAmount = 0;
         total_amount = total_amount - discountAmount;
+
+        await this.cartModel.updateOne(
+          { profile_id },
+          {
+            $set: {
+              [product_type === product_types.PHARMA
+                ? 'pharma_products'
+                : 'food_products']: [],
+            },
+          },
+          { session } as { session: ClientSession },
+        );
 
         // Commit the transaction
         await session.commitTransaction();
