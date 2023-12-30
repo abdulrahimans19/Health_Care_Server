@@ -27,7 +27,7 @@ export class DoctorService {
     @InjectModel(Doctor.name) private readonly doctorModel: Model<Doctor>,
     @InjectModel(Appointment.name)
     private readonly appointmentModel: Model<Appointment>,
-  ) {}
+  ) { }
   async addDoctor(dto: any) {
     try {
       await this.doctorModel.create(dto);
@@ -44,10 +44,10 @@ export class DoctorService {
       email: signUpDto.email,
     });
 
-    
+
 
     if (existingDoctor) {
-        throw new ConflictException('Email is already in use'); 
+      throw new ConflictException('Email is already in use');
     } else {
       const newDoctor = await this.doctorModel.create({
         email: signUpDto.email,
@@ -76,11 +76,16 @@ export class DoctorService {
   }
 
   async getDoctor(
-    experience?: number,
+    // experience?: number,
     categoryId?: string,
     gender?: Gender,
     page?: number,
     pageSize?: number,
+    today: boolean = false,
+    anytime: boolean = false,
+    tomorrow: boolean = false,
+    exp_start: number = 0,
+    exp_end: number = 100
   ) {
     try {
       const query: any = {};
@@ -92,12 +97,14 @@ export class DoctorService {
       if (categoryId) {
         query.category_id = new mongoose.Types.ObjectId(categoryId);
       }
-
-      if (experience) {
-        query.experience = { $lte: experience };
+      if (exp_start && exp_end) {
+        // Both values are specified, include the range condition
+        query.experience = { $gte: exp_start, $lte: exp_end };
       }
 
       const skip = (page - 1) * pageSize;
+
+      console.log("query",query)
 
       const doctors = await this.doctorModel
         .find(query)
@@ -107,10 +114,12 @@ export class DoctorService {
         .exec();
 
       const today = new Date();
-      const formattedToday = `${
-        today.getMonth() + 1
-      }/${today.getDate()}/${today.getFullYear()}`;
-
+      if (tomorrow) {
+        today.setDate(today.getDate() + 1);
+      }
+      const formattedToday = `${today.getMonth() + 1
+        }/${today.getDate()}/${today.getFullYear()}`;
+       
       let data = doctors.map(async (doctor: any) => {
         let next_available_slot = '';
         if (doctor.availability.length) {
@@ -154,8 +163,39 @@ export class DoctorService {
           },
         ],
       };
+      const today = new Date();
+      const formattedToday = `${today.getMonth() + 1
+        }/${today.getDate()}/${today.getFullYear()}`;
       const getDoctorSearch = await this.doctorModel.find(searchQuery).populate('availability')
-      return { getDoctorSearch };
+      console.log("getDoctorSearch", getDoctorSearch)
+      let data = getDoctorSearch.map(async (doctor: any) => {
+        let next_available_slot = '';
+        if (doctor.availability.length) {
+          console.log("availablity inside")
+          const appointment = doctor.availability.map(async (slot: any) => {
+            const slotPresent = await this.appointmentModel.findOne({
+              date: formattedToday,
+              doctorId: doctor._id,
+              slotId: (slot as any)._id,
+            });
+            console.log("slot", slot)
+            return {
+              _id: (slot as any)._id,
+              start_time: (slot as any).start_time,
+              end_time: (slot as any).end_time,
+              isBooked: slotPresent ? true : false,
+            };
+          });
+          const availability = await Promise.all(appointment);
+          return {
+            ...doctor._doc,
+            next_available_slot,
+            availability,
+          };
+        }
+      });
+      data = await Promise.all(data);
+      return data;
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
@@ -172,7 +212,7 @@ export class DoctorService {
       if (getDoctorById.availability.length) {
         let next_available_slot = '';
         const appointment = getDoctorById.availability.map(
-          async (slot: any) => { 
+          async (slot: any) => {
             const slotPresent = await this.appointmentModel.findOne({
               date: dto.date,
               doctorId: getDoctorById._id,
@@ -206,6 +246,7 @@ export class DoctorService {
     categoryId: string,
     page: number,
     pageSize: number,
+    
   ) {
     try {
       const skip = (page - 1) * pageSize;
@@ -216,11 +257,10 @@ export class DoctorService {
         .skip(skip)
         .limit(pageSize)
         .exec();
+        console.log("doctorsByCategory",doctorsByCategory)
       const today = new Date();
-      const formattedToday = `${
-        today.getMonth() + 1
-      }/${today.getDate()}/${today.getFullYear()}`;
-
+      const formattedToday = `${today.getMonth() + 1
+        }/${today.getDate()}/${today.getFullYear()}`;
       let data = doctorsByCategory.map(async (doctor: any) => {
         let next_available_slot = '';
         if (doctor.availability.length) {
@@ -345,9 +385,8 @@ export class DoctorService {
         },
       ]);
       const today = new Date();
-      const formattedToday = `${
-        today.getMonth() + 1
-      }/${today.getDate()}/${today.getFullYear()}`;
+      const formattedToday = `${today.getMonth() + 1
+        }/${today.getDate()}/${today.getFullYear()}`;
 
       let data = topRatedDoctorsByCategory.map(async (doctor: any) => {
         let next_available_slot = '';
@@ -397,8 +436,8 @@ export class DoctorService {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
   }
-  async updateDoctor(user:JwtPayload, doctorData: DoctorUpdateDto) {
-    const {  name, description, category_id, about, image, experience, gender } = doctorData;
+  async updateDoctor(user: JwtPayload, doctorData: DoctorUpdateDto) {
+    const { name, description, category_id, about, image, experience, gender } = doctorData;
 
     const updatedDoctor = await this.doctorModel.findOneAndUpdate(
       { _id: user.sub },
@@ -415,12 +454,12 @@ export class DoctorService {
       },
       { new: true } // Return the updated document
     );
-  
+
     if (!updatedDoctor) {
       throw new Error(`Something went wrong!`);
     }
-  
+
     return updatedDoctor;
   }
-  
+
 }
