@@ -5,9 +5,9 @@ import { Slots } from 'src/consultancy/slots/schema/slots.schema';
 import { UserProfile } from 'src/user-profile/schema/user-profile.schema';
 import { User } from 'src/user/schema/user.schema';
 
-enum Status{
-  UPCOMING="upcoming",
-  COMPLETED="completed"
+enum Status {
+  UPCOMING = "upcoming",
+  COMPLETED = "completed"
 }
 
 @Schema({
