@@ -36,14 +36,23 @@ export class DoctorController {
     @Query('page') page?: number,
     @Query('pageSize') pageSize?: number,
     @Query('gender') gender?: Gender,
-    @Query('experience') experience?: number,
+    @Query('today') today?: boolean,
+    @Query('anytime') anytime?: boolean,
+    @Query('tomorrow') tomorrow?: boolean,
+    @Query('exp_start') exp_start?: number,
+    @Query('exp_end') exp_end?: number,
   ) {
     return this.doctorService.getDoctor(
-      experience,
+      // experience,
       category_id,
       gender,
       page,
       pageSize,
+      today,
+      anytime,
+      tomorrow,
+      exp_start,
+      exp_end
     );
   }
 
@@ -68,7 +77,6 @@ export class DoctorController {
     @Query('categoryId') categoryId: string,
     @Query('page') page?: number,
     @Query('pageSize') pageSize?: number,
-    // @Query('today') today?: boolean,
   ) {
     return this.doctorService.getDoctorByCategory(categoryId, page, pageSize);
   }
