@@ -76,11 +76,16 @@ export class DoctorService {
   }
 
   async getDoctor(
-    experience?: number,
+    // experience?: number,
     categoryId?: string,
     gender?: Gender,
     page?: number,
     pageSize?: number,
+    today: boolean = false,
+    anytime: boolean = false,
+    tomorrow: boolean = false,
+    exp_start: number = 0,
+    exp_end: number = 100
   ) {
     try {
       const query: any = {};
@@ -92,12 +97,14 @@ export class DoctorService {
       if (categoryId) {
         query.category_id = new mongoose.Types.ObjectId(categoryId);
       }
-
-      if (experience) {
-        query.experience = { $lte: experience };
+      if (exp_start && exp_end) {
+        // Both values are specified, include the range condition
+        query.experience = { $gte: exp_start, $lte: exp_end };
       }
 
       const skip = (page - 1) * pageSize;
+
+      console.log("query",query)
 
       const doctors = await this.doctorModel
         .find(query)
@@ -107,9 +114,12 @@ export class DoctorService {
         .exec();
 
       const today = new Date();
+      if (tomorrow) {
+        today.setDate(today.getDate() + 1);
+      }
       const formattedToday = `${today.getMonth() + 1
         }/${today.getDate()}/${today.getFullYear()}`;
-
+       
       let data = doctors.map(async (doctor: any) => {
         let next_available_slot = '';
         if (doctor.availability.length) {
@@ -236,6 +246,7 @@ export class DoctorService {
     categoryId: string,
     page: number,
     pageSize: number,
+    
   ) {
     try {
       const skip = (page - 1) * pageSize;
@@ -246,10 +257,10 @@ export class DoctorService {
         .skip(skip)
         .limit(pageSize)
         .exec();
+        console.log("doctorsByCategory",doctorsByCategory)
       const today = new Date();
       const formattedToday = `${today.getMonth() + 1
         }/${today.getDate()}/${today.getFullYear()}`;
-
       let data = doctorsByCategory.map(async (doctor: any) => {
         let next_available_slot = '';
         if (doctor.availability.length) {
