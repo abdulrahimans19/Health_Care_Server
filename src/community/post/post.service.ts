@@ -79,7 +79,7 @@ export class PostService {
           is_deleted: false,
         })
         .sort({ created_at: -1 })
-        .select({ people_liked: 0 });
+        // .select({ people_liked: 0 });
       return alluserPost;
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_GATEWAY);

@@ -94,12 +94,12 @@ export class CommentsService {
         {
           $limit: pageSize,
         },
-        {
-          $project: {
-            profile_id: 0,
-            people_liked: 0,
-          },
-        },
+        // {
+        //   $project: {
+        //     profile_id: 0,
+        //     people_liked: 0,
+        //   },
+        // },
       ]);
 
       return findComments;
