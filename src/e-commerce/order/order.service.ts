@@ -35,7 +35,7 @@ export class OrderService {
       .find({
         profile_id: new Types.ObjectId(profile_id),
         product_type,
-        order_status: payment_status,
+        // order_status: payment_status,
       })
       .populate({
         path: 'product_id',
