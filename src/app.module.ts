@@ -19,8 +19,18 @@ import { FavouritesModule } from './e-commerce/favourites/favourites.module';
 import { CartModule } from './e-commerce/cart/cart.module';
 import { AddressModule } from './e-commerce/address/address.module';
 import { ReviewModule } from './e-commerce/review/review.module';
+import { PostModule } from './community/post/post.module';
+import { CommentsController } from './community/comments/comments.controller';
+import { CommentsService } from './community/comments/comments.service';
+import { CommentsModule } from './community/comments/comments.module';
 import { CouponModule } from './e-commerce/coupon/coupon.module';
 import { OrderModule } from './e-commerce/order/order.module';
+import { PaymentModule } from './payment/payment.module';
+import { DoctorModule } from './consultancy/doctor/doctor.module';
+import { SlotsModule } from './consultancy/slots/slots.module';
+import { AppointmentModule } from './consultancy/appointment/appointment.module';
+import { RecentSearchModule } from './e-commerce/recent-search/recent-search.module';
+import { FitnessModule } from './fitness/fitnessGoal/fitness.module';
 
 @Module({
   imports: [
@@ -50,10 +60,18 @@ import { OrderModule } from './e-commerce/order/order.module';
     CartModule,
     AddressModule,
     ReviewModule,
+    PostModule,
+    CommentsModule,
     CouponModule,
     OrderModule,
+    PaymentModule,
+    DoctorModule,
+    SlotsModule,
+    AppointmentModule,
+    RecentSearchModule,
+    FitnessModule
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: AtGuard }],
+  providers: [AppService,  { provide: APP_GUARD, useClass: AtGuard }],
 })
 export class AppModule {}

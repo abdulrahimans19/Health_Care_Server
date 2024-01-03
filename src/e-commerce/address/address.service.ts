@@ -1,7 +1,7 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Address } from './schema/address.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { CreateAddressDto, UpdateAddressDto } from './dto';
 
 @Injectable()
@@ -12,7 +12,7 @@ export class AddressService {
 
   async createAddress(profile_id: string, dto: CreateAddressDto) {
     await this.addressModel.create({
-      profile_id,
+      profile_id: new Types.ObjectId(profile_id),
       ...dto,
     });
 
@@ -34,11 +34,18 @@ export class AddressService {
         },
       },
     );
+    return { message: 'Adderss updated.' };
   }
 
   async getAddress(profile_id: string) {
-    const address = await this.addressModel.find({ profile_id });
+    const address = await this.addressModel.find({
+      profile_id: new Types.ObjectId(profile_id),
+    });
+    return { address };
+  }
 
+  async getSingleAddress(id: string) {
+    const address = await this.addressModel.findOne({ _id: id });
     return { address };
   }
 }

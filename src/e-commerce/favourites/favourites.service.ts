@@ -115,22 +115,19 @@ export class FavouritesService {
   async isProductInFavorites(
     profileId: string,
     productId: string,
+    productType: string,
   ): Promise<boolean> {
     const favourites = await this.favouritesModel.findOne({
-      profile_id: profileId,
+      profile_id: new Types.ObjectId(profileId),
     });
 
     if (!favourites) {
-      return false; // User has no favorites
+      return false;
     }
 
-    const isInPharmaProducts = favourites.pharma_products.some((id) =>
-      id.equals(productId),
-    );
-    const isInFoodProducts = favourites.food_products.some((id) =>
-      id.equals(productId),
-    );
+    const productField =
+      productType === product_types.FOOD ? 'food_products' : 'pharma_products';
 
-    return isInPharmaProducts || isInFoodProducts;
+    return favourites[productField].some((id) => id.equals(productId));
   }
 }

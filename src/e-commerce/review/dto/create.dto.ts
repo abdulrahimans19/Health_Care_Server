@@ -6,6 +6,10 @@ export class CreateReviewDto {
   product_id: string;
 
   @IsNotEmpty()
+  @IsMongoId()
+  order_id: string;
+
+  @IsNotEmpty()
   @IsString()
   comment: string;
 

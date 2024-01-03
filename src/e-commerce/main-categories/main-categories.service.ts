@@ -12,23 +12,27 @@ export class MainCategoriesService {
     private readonly mainCategoryModel: Model<MainCategories>,
   ) {}
 
-  async getAllCategoriesByType(eCommerceType: product_types) {
+  async getAllCategoriesByType(product_type: product_types) {
     const mainCategories = await this.mainCategoryModel.find({
-      product_type: eCommerceType,
+      product_type: product_type,
     });
 
     return { mainCategories };
   }
 
+  async getSingleCategory(id: string) {
+    return await this.mainCategoryModel.findOne({ _id: id });
+  }
+
   async createMainCategory(
     dto: CreateMainCategoryDto,
-    eCommerceType: product_types,
+    product_type: product_types,
   ) {
     await this.mainCategoryModel.create({
       title: dto.title,
       image: dto.image,
       description: dto.description,
-      product_type: eCommerceType,
+      product_type: product_type,
     });
 
     return { message: 'Main Category created.' };
@@ -47,5 +51,16 @@ export class MainCategoriesService {
     );
 
     return { message: 'Main Category updated.' };
+  }
+
+  async search(query: string) {
+    const regex = new RegExp(query, 'i');
+    const categories = await this.mainCategoryModel
+      .find({
+        $or: [{ title: { $regex: regex } }, { description: { $regex: regex } }],
+      })
+      .exec();
+
+    return { categories };
   }
 }

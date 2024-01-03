@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { MainCategoriesService } from './main-categories.service';
 import { product_types } from '../types';
 import { CreateMainCategoryDto, UpdateMainCategoryDto } from './dto';
@@ -27,6 +35,11 @@ export class MainCategoriesController {
     return this.mainCategoryService.getAllCategoriesByType(
       product_types.DOCTOR,
     );
+  }
+
+  @Get('/search')
+  searchCategory(@Query('search') search: string) {
+    return this.mainCategoryService.search(search);
   }
 
   @Post('/pharma/create')

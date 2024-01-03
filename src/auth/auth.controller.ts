@@ -1,13 +1,15 @@
 import { Controller, Post, Body, HttpStatus, HttpCode } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { Public } from 'src/shared/decorators';
+import { GetUser, Public } from 'src/shared/decorators';
 import {
+  ChangePasswordDto,
   PasswordResetDto,
   SignInDto,
   SignUpDto,
   ValidateOtpDto,
   VerifyEmailDto,
 } from './dto';
+import { JwtPayload } from './strategies';
 
 @Controller('auth')
 export class AuthController {
@@ -25,6 +27,20 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   signIn(@Body() dto: SignInDto) {
     return this.authService.signIn(dto);
+  }
+
+  @Public()
+  @Post('/doctor/sign-up')
+  @HttpCode(HttpStatus.OK)
+  doctorSignup(@Body() dto: SignUpDto) {
+    return this.authService.doctorSignUp(dto);
+  }
+
+  @Public()
+  @Post('/doctor/sign-in')
+  @HttpCode(HttpStatus.OK)
+  doctorSignIn(@Body() dto: SignInDto) {
+    return this.authService.doctorSignIn(dto);
   }
 
   @Public()
@@ -55,5 +71,11 @@ export class AuthController {
   @Post('/resend-otp')
   resendOtp(@Body('email') email: string) {
     return this.authService.resendOtp(email);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('/change-password')
+  changePassword(@GetUser() user: JwtPayload, @Body() dto: ChangePasswordDto) {
+    return this.authService.changePassword(user, dto);
   }
 }

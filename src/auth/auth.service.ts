@@ -2,10 +2,12 @@ import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt/dist';
 import * as schedule from 'node-schedule';
 import * as bcrypt from 'bcrypt';
-import { SignInDto, SignUpDto } from './dto';
+import { ChangePasswordDto, SignInDto, SignUpDto } from './dto';
 import { MailService } from 'src/mail/mail.service';
 import { generateOTP } from 'src/shared/utils/utils';
 import { UserService } from 'src/user/user.service';
+import { JwtPayload } from './strategies';
+import { DoctorService } from 'src/consultancy/doctor/doctor.service';
 
 const OTP_EXPIRATION_TIME = 10 * 60 * 1000;
 
@@ -18,6 +20,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
     private readonly userService: UserService,
+    private readonly doctorService: DoctorService,
   ) {}
 
   async getTokens(userId: string, email: string) {
@@ -41,7 +44,7 @@ export class AuthService {
   async signIn(signInDto: SignInDto) {
     const user = await this.userService.signIn(signInDto);
     const tokens = await this.getTokens(user._id.toString(), user.email);
-    return { tokens };
+    return { tokens, user_role: user.roles };
   }
 
   async signUp(signUpDto: SignUpDto) {
@@ -53,6 +56,19 @@ export class AuthService {
 
     return await this.mailService.sendEmailOtpForVerification(user.email, otp);
   }
+
+  async doctorSignIn(signInDto: SignInDto) {
+    const doctor:any = await this.doctorService.signIn(signInDto);
+    const tokens = await this.getTokens(doctor._id, doctor.email);
+    return { tokens, user_role: 'doctor' };
+  }
+
+
+  async doctorSignUp(signUpDto: SignUpDto) {
+    const doctor = await this.doctorService.signUp(signUpDto);
+    return doctor;
+  }
+
 
   async forgotPassword(email: string) {
     const user = await this.userService.getUserByEmail(email);
@@ -100,6 +116,20 @@ export class AuthService {
     this.scheduleOtpReset(email);
 
     return await this.mailService.sendEmailOtpForVerification(email, otp);
+  }
+
+  async changePassword(user: JwtPayload, dto: ChangePasswordDto) {
+    const userData = await this.userService.getUserById(user.sub);
+    const validPassword = await bcrypt.compare(
+      dto.oldPassword,
+      userData.password,
+    );
+    
+    if (!validPassword) throw new UnauthorizedException('Invalid Password');
+
+    await this.userService.updatePassword(user.email, dto.newPassword);
+
+    return { message: 'Password Updated' };
   }
 
   private scheduleOtpReset(email: string): void {

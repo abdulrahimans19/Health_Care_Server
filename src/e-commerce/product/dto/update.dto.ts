@@ -1,4 +1,6 @@
 import {
+  ArrayNotEmpty,
+  IsArray,
   IsMongoId,
   IsNotEmpty,
   IsNumber,
@@ -31,6 +33,10 @@ export class UpdateProductDto {
   @IsNumber()
   price: number;
 
+  @IsNotEmpty()
+  @IsNumber()
+  quantity: number;
+
   @IsOptional()
   @IsNumber()
   offer_price: number;
@@ -38,4 +44,10 @@ export class UpdateProductDto {
   @IsNotEmpty()
   @IsMongoId()
   sub_category_id: string;
+
+  @IsNotEmpty()
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  country_codes: string[];
 }

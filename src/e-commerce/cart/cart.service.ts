@@ -147,4 +147,23 @@ export class CartService {
 
     await cart.save();
   }
+
+  async isProductInCart(
+    profileId: string,
+    productId: string,
+    productType: string,
+  ): Promise<number> {
+    const cart_type = productType === 'FOOD' ? 'food' : 'pharma';
+    const cart = await this.getCart(profileId);
+    const cartItems = cart[`${cart_type}_products`] || [];
+    const existingCartItem = cartItems.find((item) =>
+      item.product.equals(productId),
+    );
+
+    if (existingCartItem) {
+      return existingCartItem.quantity;
+    } else {
+      return 0;
+    }
+  }
 }

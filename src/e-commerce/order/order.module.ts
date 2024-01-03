@@ -9,6 +9,8 @@ import {
   user_profile_schema,
 } from 'src/user-profile/schema/user-profile.schema';
 import { UserModule } from 'src/user/user.module';
+import { Coupon, coupon_schema } from '../coupon/schema/coupon.schema';
+import { PaymentModule } from 'src/payment/payment.module';
 
 @Module({
   imports: [
@@ -16,8 +18,10 @@ import { UserModule } from 'src/user/user.module';
       { name: Order.name, schema: order_schema },
       { name: Cart.name, schema: cart_schema },
       { name: UserProfile.name, schema: user_profile_schema },
+      { name: Coupon.name, schema: coupon_schema },
     ]),
     UserModule,
+    PaymentModule,
   ],
   providers: [OrderService],
   controllers: [OrderController],
