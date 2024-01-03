@@ -56,6 +56,37 @@ export class OrderService {
     return { orders };
   }
 
+  async getAllOrder(
+    product_type: product_types,
+    payment_status: string,
+    page: number = 1,
+    pageSize: number = 10,
+  ) {
+    const skip = (page - 1) * pageSize;
+    const orders = await this.orderModel
+      .find({
+        product_type,
+        // order_status: payment_status,
+      })
+      .populate({
+        path: 'product_id',
+        model: 'Product',
+      })
+      .populate({
+        path: 'address_id',
+        model: 'Address',
+      })
+      .populate({
+        path: 'review_id',
+        model: 'Review',
+      })
+      .skip(skip)
+      .limit(pageSize)
+      .sort({ created_at: -1 });
+
+    return { orders };
+  }
+
   private async checkout(
     profile_id: string,
     user: JwtPayload,
