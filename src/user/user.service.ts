@@ -165,4 +165,15 @@ export class UserService {
     );
     return { message: 'Status Updated' };
   }
+
+  async getUserCount(startDate, endDate) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const count = await this.userModel.countDocuments({
+      created_at: { $gte: start, $lte: end },
+      is_active: true, // Only count active users
+    });
+
+    return { user_count: count };
+  }
 }
