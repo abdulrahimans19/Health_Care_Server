@@ -102,4 +102,45 @@ export class DoctorController {
   addDoctorSlots(@Body() dto: any, @Param('doctorId') doctorId: string) {
     return this.doctorService.addDoctorSlots(doctorId, dto);
   }
+
+  @Get('admin/doctor-search')
+  doctorSearch(
+    @Query('search') search: string,
+    @Query('categoryId') categoryId: string,
+    @Query('page') page?: number,
+    @Query('pageSize') pageSize?: number,
+  ) {
+    return this.doctorService.doctorSearch(search, categoryId, page, pageSize);
+  }
+
+  @Get('admin/top-doctors')
+  getTopDoctorsForAdmin(
+    @Query('page') page?: string,
+    @Query('pagesize') pagesize?: string,
+  ) {
+    const parsedPage = page ? parseInt(page, 10) : undefined;
+    const parsedPageSize = pagesize ? parseInt(pagesize, 10) : undefined;
+    return this.doctorService.getTopDoctorsForAdmin(parsedPage, parsedPageSize);
+  }
+
+  @Get('admin/total-doctors')
+  getTotalDoctors(
+    @Query('search') search?: string,
+    @Query('gender') gender?: Gender,
+    @Query('categoryId') categoryId?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
+    @Query('page') page?: number,
+    @Query('pageSize') pageSize?: number,
+  ) {
+    return this.doctorService.getTotalDoctors(
+      search,
+      gender,
+      categoryId,
+      sortBy,
+      sortOrder,
+      page,
+      pageSize,
+    );
+  }
 }
