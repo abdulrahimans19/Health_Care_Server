@@ -38,8 +38,10 @@ export class AppointmentController {
   @Get('doctor-appointments')
   // @Roles(UserRoles.ADMIN)
   // @UseGuards(RoleGuard)
-  getDoctorAppointment(@Body() userId: string) {
-    return this.appointmentService.getDoctorAppointment(userId);
+  getDoctorAppointment(
+    @GetUser() user: JwtPayload,
+    ) {
+    return this.appointmentService.getDoctorAppointment(user);
   }
 
   @Post('update-appointment-status')

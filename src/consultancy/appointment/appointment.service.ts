@@ -43,10 +43,10 @@ export class AppointmentService {
     }
   }
 
-  async getDoctorAppointment(doctorId: any) {
+  async getDoctorAppointment(user: any) {
     try {
-      const appointments = await this.appointmentModel.find(doctorId).populate("slotId");
-      return appointments
+      const appointments = await this.appointmentModel.find({doctorId:user.sub}).populate("slotId patientId");
+      return appointments 
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
