@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CouponService } from './coupon.service';
 import { GetUser, Roles } from 'src/shared/decorators';
 import { JwtPayload } from 'src/auth/strategies';
@@ -16,8 +24,11 @@ export class CouponController {
   }
 
   @Get('/get-all')
-  getAllCoupons() {
-    return this.couponService.getAllCoupon();
+  getAllCoupons(
+    @Query('page') page?: number,
+    @Query('pageSize') pageSize?: number,
+  ) {
+    return this.couponService.getAllCoupon(page, pageSize);
   }
 
   @Post('/apply')
