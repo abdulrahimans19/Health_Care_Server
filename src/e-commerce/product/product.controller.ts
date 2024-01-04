@@ -7,7 +7,9 @@ import {
   Post,
   Put,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto, UpdateProductDto } from './dto';
@@ -16,6 +18,8 @@ import { Roles } from 'src/shared/decorators';
 import { UserRoles } from 'src/user/schema/user.schema';
 import { RoleGuard } from 'src/shared/guards';
 import { GetProfileId } from 'src/shared/decorators/get-profile-id.decorator';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 
 @Controller('product')
 export class ProductController {
@@ -123,11 +127,30 @@ export class ProductController {
     return this.productService.createProduct(dto, product_types.PHARMA);
   }
 
+  @Post('/pharma/create/multiple')
+  @Roles(UserRoles.ADMIN)
+  @UseGuards(RoleGuard)
+  @UseInterceptors(FileInterceptor('file', { storage: diskStorage({}) }))
+  createMultiplePharmaProduct(@Body() dto, @UploadedFile() file) {
+    return this.productService.createMultipleProduct(
+      file,
+      product_types.PHARMA,
+    );
+  }
+
   @Post('/food/create')
   @Roles(UserRoles.ADMIN)
   @UseGuards(RoleGuard)
   createFoodProduct(@Body() dto: CreateProductDto) {
     return this.productService.createProduct(dto, product_types.FOOD);
+  }
+
+  @Post('/food/create/multiple')
+  @Roles(UserRoles.ADMIN)
+  @UseGuards(RoleGuard)
+  @UseInterceptors(FileInterceptor('file', { storage: diskStorage({}) }))
+  createMultipleFoodProduct(@Body() dto, @UploadedFile() file) {
+    return this.productService.createMultipleProduct(file, product_types.FOOD);
   }
 
   @Put('/pharma/update')
@@ -149,5 +172,91 @@ export class ProductController {
   @UseGuards(RoleGuard)
   deleteProduct(@Param('id') id: string) {
     return this.productService.deleteProduct(id);
+  }
+
+  @Get('/pharma-admin')
+  getPharmaAdminProducts(
+    @GetProfileId() profile_id: string,
+    @Query('page') page?: number,
+    @Query('pageSize') pageSize?: number,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    @Query('country_code') country_code?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.productService.getProductsForAdmin(
+      profile_id,
+      product_types.PHARMA,
+      country_code,
+      page,
+      pageSize,
+      sortBy || 'price',
+      sortOrder || 'asc',
+      search,
+    );
+  }
+
+  @Get('/food-admin')
+  getFoodAdminProducts(
+    @GetProfileId() profile_id: string,
+    @Query('page') page?: number,
+    @Query('pageSize') pageSize?: number,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    @Query('country_code') country_code?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.productService.getProductsForAdmin(
+      profile_id,
+      product_types.FOOD,
+      country_code,
+      page,
+      pageSize,
+      sortBy || 'price',
+      sortOrder || 'asc',
+      search,
+    );
+  }
+
+  @Get('/admin/all-products/:category_id')
+  getAllProductsForAdmin(
+    @Param('category_id') category_id: string,
+    @GetProfileId() profile_id: string,
+    @Query('page') page?: number,
+    @Query('pageSize') pageSize?: number,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    @Query('country_code') country_code?: string,
+  ) {
+    return this.productService.getProductsByMainCategoryForAdmin(
+      profile_id,
+      category_id,
+      country_code,
+      page,
+      pageSize,
+      sortBy || 'price',
+      sortOrder || 'asc',
+    );
+  }
+
+  @Get('/admin/sub-category/:category_id')
+  getAllProductsBySubCategoryForAdmin(
+    @Param('category_id') category_id: string,
+    @GetProfileId() profile_id: string,
+    @Query('page') page?: number,
+    @Query('pageSize') pageSize?: number,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    @Query('country_code') country_code?: string,
+  ) {
+    return this.productService.getProductsBySubCategoryForAdmin(
+      profile_id,
+      category_id,
+      country_code,
+      page,
+      pageSize,
+      sortBy || 'price',
+      sortOrder || 'asc',
+    );
   }
 }

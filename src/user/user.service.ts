@@ -10,6 +10,7 @@ import { User } from './schema/user.schema';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'src/auth/strategies';
 import { SignInDto, SignUpDto } from 'src/auth/dto';
+import * as moment from 'moment';
 
 @Injectable()
 export class UserService {
@@ -163,6 +164,127 @@ export class UserService {
       { _id: user.sub },
       { $set: { is_deactivated: !userData.is_deactivated } },
     );
+    return { message: 'Status Updated' };
+  }
+
+  async getUserCount() {
+    try {
+      const start = moment().subtract(6, 'months').startOf('month').toDate();
+      const end = moment().endOf('month').toDate();
+
+      const result = await this.userModel.aggregate([
+        {
+          $match: {
+            created_at: { $gte: start, $lte: end },
+            is_active: true,
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: '%Y-%m', date: '$created_at' },
+            },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            month: '$_id',
+            count: 1,
+          },
+        },
+        {
+          $sort: { month: 1 },
+        },
+      ]);
+
+      const formattedResult = result.map(({ month, count }) => ({
+        month: moment(month, 'YYYY-MM').format('MMM'),
+        count,
+      }));
+
+      return { user_count: formattedResult };
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async getUsersForAdmin(dto: any): Promise<any> {
+    try {
+      let { search, sortBy, sortOrder, active, page = 1, limit = 10 } = dto;
+
+      const matchCriteria = { roles: 'User' };
+      if (search) {
+        matchCriteria['$or'] = [
+          { email: new RegExp(search, 'i') },
+          { name: new RegExp(search, 'i') },
+        ];
+      }
+
+      if (active) {
+        let isActive: boolean = active === 'true';
+        matchCriteria['is_active'] = isActive;
+      }
+
+      const sortCriteria = {};
+      if (sortBy) {
+        sortCriteria[sortBy] = sortOrder ? 1 : -1;
+      }
+
+      if (isNaN(page)) {
+        page = 1;
+      }
+
+      if (isNaN(limit) || limit <= 0) {
+        limit = 10;
+      }
+
+      page = parseInt(page.toString(), 10);
+      limit = parseInt(limit.toString(), 10);
+
+      const aggregationPipeline = [
+        { $match: matchCriteria },
+        {
+          $facet: {
+            totalCount: [{ $count: 'value' }],
+            paginatedUsers: [
+              {
+                $sort:
+                  Object.keys(sortCriteria).length > 0
+                    ? sortCriteria
+                    : { _id: 1 },
+              },
+              { $skip: (page - 1) * limit },
+              { $limit: limit },
+            ],
+          },
+        },
+      ];
+
+      const result = await this.userModel.aggregate(aggregationPipeline).exec();
+
+      if (result.length > 0) {
+        const { totalCount, paginatedUsers } = result[0];
+        return {
+          users: paginatedUsers,
+          totalCount: totalCount[0] ? totalCount[0].value : 0,
+        };
+      } else {
+        return { users: [], totalCount: 0 };
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async updateUserStatus(user_id: string) {
+    const userData = await this.userModel.findOne({ _id: user_id });
+    await this.userModel.updateOne(
+      { _id: user_id },
+      { $set: { is_active: !userData.is_active } },
+    );
+
     return { message: 'Status Updated' };
   }
 }

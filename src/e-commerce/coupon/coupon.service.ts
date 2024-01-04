@@ -11,9 +11,16 @@ export class CouponService {
     @InjectModel(Coupon.name) private readonly couponModel: Model<Coupon>,
   ) {}
 
-  async getAllCoupon() {
-    const coupons = await this.couponModel.find().sort({ created_at: -1 });
-    return { coupons };
+  async getAllCoupon(page, pageSize) {
+    const skip = (page - 1) * pageSize;
+    const coupons = await this.couponModel
+      .find()
+      .sort({ created_at: -1 })
+      .skip(skip)
+      .limit(pageSize);
+
+    const total_coupon_count = await this.couponModel.countDocuments();
+    return { coupons, total_coupon_count };
   }
 
   async getCouponForUser(user: JwtPayload) {

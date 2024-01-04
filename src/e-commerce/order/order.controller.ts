@@ -31,11 +31,71 @@ export class OrderController {
   getFoodOrders(
     @GetProfileId() profile_id: string,
     @Query('payment_status') payment_status: string,
+    @Query('page') page: number,
+    @Query('pageSize') pageSize: number,
   ) {
     return this.orderService.getProfileOrder(
       profile_id,
       product_types.FOOD,
       payment_status,
+      page,
+      pageSize,
+    );
+  }
+
+  @Get('/pharma/all-orders')
+  getAllPharmaOrders(
+    @Query('payment_status') payment_status: string,
+    @Query('page') page: number,
+    @Query('pageSize') pageSize: number,
+  ) {
+    return this.orderService.getAllOrder(
+      product_types.PHARMA,
+      payment_status,
+      page,
+      pageSize,
+    );
+  }
+
+  @Get('/food/all-orders')
+  getAllFoodOrders(
+    @Query('payment_status') payment_status: string,
+    @Query('page') page: number,
+    @Query('pageSize') pageSize: number,
+  ) {
+    return this.orderService.getAllOrder(
+      product_types.FOOD,
+      payment_status,
+      page,
+      pageSize,
+    );
+  }
+
+  @Get('/pharma/order-count')
+  getPharmaOrdersCount(
+    @Query('payment_status') payment_status: string,
+    @Query('page') page: number,
+    @Query('pageSize') pageSize: number,
+  ) {
+    return this.orderService.getAllOrderCount(
+      product_types.PHARMA,
+      payment_status,
+      page,
+      pageSize,
+    );
+  }
+
+  @Get('/food/order-count')
+  getFoodOrdersCount(
+    @Query('payment_status') payment_status: string,
+    @Query('page') page: number,
+    @Query('pageSize') pageSize: number,
+  ) {
+    return this.orderService.getAllOrderCount(
+      product_types.FOOD,
+      payment_status,
+      page,
+      pageSize,
     );
   }
 

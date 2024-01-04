@@ -19,9 +19,7 @@ import { DoctorUpdateDto } from './dto/doctor-update.dto';
 
 @Controller('doctor')
 export class DoctorController {
-  constructor(
-    private readonly doctorService: DoctorService,
-  ) { }
+  constructor(private readonly doctorService: DoctorService) {}
 
   @Post('add-doctor')
   @Roles(UserRoles.ADMIN)
@@ -52,7 +50,7 @@ export class DoctorController {
       anytime,
       tomorrow,
       exp_start,
-      exp_end
+      exp_end,
     );
   }
 
@@ -65,10 +63,7 @@ export class DoctorController {
   }
 
   @Post('get-doctor-details/:doctorId')
-  getDoctorDetails(
-    @Param('doctorId') doctorId: string,
-    @Body() dto: any
-  ) {
+  getDoctorDetails(@Param('doctorId') doctorId: string, @Body() dto: any) {
     return this.doctorService.getDoctorDetails(doctorId, dto);
   }
 
@@ -96,16 +91,56 @@ export class DoctorController {
   }
 
   @Post('update-doctor')
-  updateDoctor(@GetUser() user: JwtPayload, @Body() updateData: DoctorUpdateDto){
-    return this.doctorService.updateDoctor(user, updateData) 
-  }
-  
-  @Post('add-slots/:doctorId')
-  addDoctorSlots(
-    @Body() dto: any,
-    @Param('doctorId') doctorId: string,
+  updateDoctor(
+    @GetUser() user: JwtPayload,
+    @Body() updateData: DoctorUpdateDto,
   ) {
+    return this.doctorService.updateDoctor(user, updateData);
+  }
+
+  @Post('add-slots/:doctorId')
+  addDoctorSlots(@Body() dto: any, @Param('doctorId') doctorId: string) {
     return this.doctorService.addDoctorSlots(doctorId, dto);
   }
 
+  @Get('admin/doctor-search')
+  doctorSearch(
+    @Query('search') search: string,
+    @Query('categoryId') categoryId: string,
+    @Query('page') page?: number,
+    @Query('pageSize') pageSize?: number,
+  ) {
+    return this.doctorService.doctorSearch(search, categoryId, page, pageSize);
+  }
+
+  @Get('admin/top-doctors')
+  getTopDoctorsForAdmin(
+    @Query('page') page?: string,
+    @Query('pagesize') pagesize?: string,
+  ) {
+    const parsedPage = page ? parseInt(page, 10) : undefined;
+    const parsedPageSize = pagesize ? parseInt(pagesize, 10) : undefined;
+    return this.doctorService.getTopDoctorsForAdmin(parsedPage, parsedPageSize);
+  }
+
+  @Get('admin/total-doctors')
+  getTotalDoctors(
+    @Query('search') search?: string,
+    @Query('gender') gender?: Gender,
+    @Query('categoryId') categoryId?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
+    @Query('page') page?: number,
+    @Query('pageSize') pageSize?: number,
+  ) {
+    return this.doctorService.getTotalDoctors(
+      search,
+      gender,
+      categoryId,
+      sortBy,
+      sortOrder,
+      page,
+      pageSize,
+    );
+  }
 }
