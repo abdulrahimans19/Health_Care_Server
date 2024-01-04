@@ -71,6 +71,34 @@ export class OrderController {
     );
   }
 
+  @Get('/pharma/order-count')
+  getPharmaOrdersCount(
+    @Query('payment_status') payment_status: string,
+    @Query('page') page: number,
+    @Query('pageSize') pageSize: number,
+  ) {
+    return this.orderService.getAllOrderCount(
+      product_types.PHARMA,
+      payment_status,
+      page,
+      pageSize,
+    );
+  }
+
+  @Get('/food/order-count')
+  getFoodOrdersCount(
+    @Query('payment_status') payment_status: string,
+    @Query('page') page: number,
+    @Query('pageSize') pageSize: number,
+  ) {
+    return this.orderService.getAllOrderCount(
+      product_types.FOOD,
+      payment_status,
+      page,
+      pageSize,
+    );
+  }
+
   @Post('pharma/cart-checkout')
   @UseGuards(ProfileGuard)
   pharmaCartCheckout(
