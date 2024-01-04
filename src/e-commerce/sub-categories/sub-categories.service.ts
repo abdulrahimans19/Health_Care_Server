@@ -53,4 +53,25 @@ export class SubCategoriesService {
 
     return { message: 'Sub Category updated.' };
   }
+  async getSubCategoriesByMainCategoryForAdmin(
+    mainCategoryId: string,
+    page: number = 1,
+    pageSize: number = 10,
+  ) {
+    const skip = (page - 1) * pageSize;
+
+    const query: any = {
+      main_category_id: mainCategoryId,
+    };
+
+    // Get the total count of documents matching the query
+    const totalCount = await this.subCategoriesModel.countDocuments(query);
+
+    const subCategories = await this.subCategoriesModel
+      .find(query)
+      .skip(skip)
+      .limit(pageSize);
+
+    return { subCategories, totalCount };
+  }
 }
