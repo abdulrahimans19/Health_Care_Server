@@ -277,4 +277,14 @@ export class UserService {
       console.log(error);
     }
   }
+
+  async updateUserStatus(user_id: string) {
+    const userData = await this.userModel.findOne({ _id: user_id });
+    await this.userModel.updateOne(
+      { _id: user_id },
+      { $set: { is_active: !userData.is_active } },
+    );
+
+    return { message: 'Status Updated' };
+  }
 }
