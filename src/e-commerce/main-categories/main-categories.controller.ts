@@ -89,4 +89,9 @@ export class MainCategoriesController {
   updateDoctorCategory(@Body() dto: UpdateMainCategoryDto) {
     return this.mainCategoryService.updateMainCategory(dto);
   }
+
+  @Get('/admin/doctor')
+  getAllDoctorCategoriesForAdmin() {
+    return this.mainCategoryService.getAllCategoriesByTypeForAdmin(product_types.FOOD);
+  }
 }

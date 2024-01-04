@@ -131,7 +131,7 @@ export class DoctorController {
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: string,
     @Query('page') page?: number,
-    @Query('limit') pageSize?: number,
+    @Query('pageSize') pageSize?: number,
   ) {
     return this.doctorService.getTotalDoctors(
       search,
