@@ -123,11 +123,31 @@ export class ProductController {
     return this.productService.createProduct(dto, product_types.PHARMA);
   }
 
+  @Post('/pharma/create/multiple')
+  @Roles(UserRoles.ADMIN)
+  @UseGuards(RoleGuard)
+  createMultipleProduct(@Body() dto) {
+    return this.productService.createMultipleProduct(
+      dto.json,
+      product_types.PHARMA,
+    );
+  }
+
   @Post('/food/create')
   @Roles(UserRoles.ADMIN)
   @UseGuards(RoleGuard)
   createFoodProduct(@Body() dto: CreateProductDto) {
     return this.productService.createProduct(dto, product_types.FOOD);
+  }
+
+  @Post('/food/create/multiple')
+  @Roles(UserRoles.ADMIN)
+  @UseGuards(RoleGuard)
+  createMultipleFoodProduct(@Body() dto) {
+    return this.productService.createMultipleProduct(
+      dto.json,
+      product_types.FOOD,
+    );
   }
 
   @Put('/pharma/update')
@@ -151,7 +171,6 @@ export class ProductController {
     return this.productService.deleteProduct(id);
   }
 
-  
   @Get('/pharma-admin')
   getPharmaAdminProducts(
     @GetProfileId() profile_id: string,
@@ -195,7 +214,7 @@ export class ProductController {
       search,
     );
   }
-  
+
   @Get('/admin/all-products/:category_id')
   getAllProductsForAdmin(
     @Param('category_id') category_id: string,

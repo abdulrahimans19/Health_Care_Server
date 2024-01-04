@@ -411,5 +411,24 @@ export class ProductService {
   
     return { products: enhancedProducts, totalCount };
   }
-  
+
+  async createMultipleProduct(json:CreateProductDto[],product_type:product_types){
+    const bulkOps = json.map(data => ({
+      insertOne: {
+        document: {
+          ...data,
+          product_type,
+        },
+      },
+    }));
+
+    try {
+      const result = await this.productModel.bulkWrite(bulkOps);
+      console.log(result);
+      return { message: 'Products added successfully' };
+    } catch (error) {
+      console.error(error);
+      throw new Error('Failed to add products');
+    }
+  }
 }
