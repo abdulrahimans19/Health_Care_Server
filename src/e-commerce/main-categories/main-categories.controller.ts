@@ -94,4 +94,15 @@ export class MainCategoriesController {
   getAllDoctorCategoriesForAdmin() {
     return this.mainCategoryService.getAllCategoriesByTypeForAdmin(product_types.FOOD);
   }
+  @Get('/admin/pharma')
+  getAllPharamCategoriesForAdmin() {
+    return this.mainCategoryService.getAllCategoriesByTypeForAdmin(
+      product_types.PHARMA,
+    );
+  }
+
+  @Get('/admin/food')
+  getAllFoodCategoriesForAdmin() {
+    return this.mainCategoryService.getAllCategoriesByTypeForAdmin(product_types.FOOD);
+  }
 }
