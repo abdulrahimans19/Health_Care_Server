@@ -37,4 +37,10 @@ export class SubCategoriesController {
   updateSubCategory(@Body() updateSubCategoryDto: UpdateSubCategoryDto) {
     return this.subCategoriesService.updateSubCategory(updateSubCategoryDto);
   }
+  @Get('/admin/:id')
+  getSubCategoryByMainCategoryForAdmin(@Param('id') mainCategoryId: string) {
+    return this.subCategoriesService.getSubCategoriesByMainCategoryForAdmin(
+      mainCategoryId,
+    );
+  }
 }

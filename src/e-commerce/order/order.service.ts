@@ -13,6 +13,7 @@ import { product_types } from '../types';
 import { Coupon } from '../coupon/schema/coupon.schema';
 import { JwtPayload } from 'src/auth/strategies';
 import { PaymentService } from 'src/payment/payment.service';
+import * as moment from 'moment';
 
 @Injectable()
 export class OrderService {
@@ -83,8 +84,11 @@ export class OrderService {
       .skip(skip)
       .limit(pageSize)
       .sort({ created_at: -1 });
+    const total_order_count = await this.orderModel.countDocuments({
+      product_type,
+    });
 
-    return { orders };
+    return { orders, total_order_count };
   }
 
   private async checkout(
@@ -438,6 +442,72 @@ export class OrderService {
       return { message: 'Payment Successful. Order Created.' };
     } else {
       throw new ConflictException('Payment Failed.');
+    }
+  }
+
+  async getAllOrderCount(
+    product_type: product_types,
+    payment_status: string,
+    page: number = 1,
+    pageSize: number = 10,
+  ) {
+    try {
+      const skip = (page - 1) * pageSize;
+
+      const start = moment().subtract(6, 'months').startOf('month').toDate();
+      const end = moment().endOf('month').toDate();
+
+      // Ensure pageSize is a number
+      const pageSizeAsNumber = parseInt(`${pageSize}`, 10);
+
+      if (isNaN(pageSizeAsNumber) || pageSizeAsNumber <= 0) {
+        throw new Error('Invalid pageSize');
+      }
+
+      const result = await this.orderModel.aggregate([
+        {
+          $match: {
+            created_at: { $gte: start, $lte: end },
+            product_type,
+            // Add other conditions as needed
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: '%Y-%m', date: '$created_at' },
+            },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            month: '$_id',
+            count: 1,
+          },
+        },
+        {
+          $sort: { month: 1 },
+        },
+        {
+          $skip: skip,
+        },
+        {
+          $limit: pageSizeAsNumber,
+        },
+      ]);
+
+      const formattedResult = result.map(({ month, count }) => ({
+        month: moment(month, 'YYYY-MM').format('MMM'),
+        count,
+      }));
+
+      return { order_count: formattedResult };
+    } catch (error) {
+      console.error(error);
+      // Handle the error appropriately, e.g., throw a custom exception or return an error response.
+      throw new Error('Failed to retrieve order count');
     }
   }
 }

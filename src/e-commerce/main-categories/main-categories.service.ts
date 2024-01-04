@@ -63,4 +63,25 @@ export class MainCategoriesService {
 
     return { categories };
   }
+  async getAllCategoriesByTypeForAdmin(
+    product_type: product_types,
+    page: number = 1,
+    pageSize: number = 10,
+  ) {
+    const skip = (page - 1) * pageSize;
+
+    const query: any = {
+      product_type: product_type,
+    };
+
+    // Get the total count of documents matching the query
+    const totalCount = await this.mainCategoryModel.countDocuments(query);
+
+    const mainCategories = await this.mainCategoryModel
+      .find(query)
+      .skip(skip)
+      .limit(pageSize);
+
+    return { mainCategories, totalCount };
+  }
 }

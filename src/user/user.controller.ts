@@ -1,7 +1,9 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
-import { GetUser } from 'src/shared/decorators';
+import { GetUser, Roles } from 'src/shared/decorators';
 import { JwtPayload } from 'src/auth/strategies';
+import { RoleGuard } from 'src/shared/guards';
+import { UserRoles } from './schema/user.schema';
 
 @Controller('user')
 export class UserController {
@@ -13,7 +15,19 @@ export class UserController {
   }
 
   @Get('/get-user-count')
-  getUserCount(@Query('startDate')startDate,@Query('endDate')endDate){
-    return this.userService.getUserCount(startDate,endDate)
+  getUserCount() {
+    return this.userService.getUserCount();
+  }
+
+  @Get('/user-list')
+  async getUsersForAdmin(@Query() dto: any): Promise<any> {
+    return this.userService.getUsersForAdmin(dto);
+  }
+
+  @Get('/update-user-status')
+  @Roles(UserRoles.ADMIN)
+  @UseGuards(RoleGuard)
+  updateUserStatus(@Query('id') id: string) {
+    return this.userService.updateUserStatus(id);
   }
 }

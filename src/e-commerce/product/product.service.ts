@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Product } from './schema/product.schema';
@@ -8,6 +8,7 @@ import { FavouritesService } from '../favourites/favourites.service';
 import { CartService } from '../cart/cart.service';
 import { MainCategoriesService } from '../main-categories/main-categories.service';
 import { RecentSearchService } from '../recent-search/recent-search.service';
+import * as fs from 'fs';
 
 @Injectable()
 export class ProductService {
@@ -143,6 +144,7 @@ export class ProductService {
     return { products: enhancedProducts };
   }
 
+
   async getSingleProduct(
     profile_id: string,
     productId: string,
@@ -275,5 +277,172 @@ export class ProductService {
     );
 
     return enhancedProducts;
+  }
+
+  async getProductsForAdmin(
+    profile_id: string,
+    productType: product_types,
+    country_code: string,
+    page: number = 1,
+    pageSize: number = 10,
+    sortBy: string = 'price',
+    sortOrder: 'asc' | 'desc' = 'desc',
+    searchKeyword?: string,
+  ): Promise<any> {
+    const skip = (page - 1) * pageSize;
+
+    const query: any = {
+      product_type: productType,
+    };
+
+    if (country_code) {
+      query.country_codes = { $in: [country_code, 'all'] };
+    }
+
+    if (searchKeyword) {
+      await this.recentSearchService.addToRecentSearch(
+        profile_id,
+        productType,
+        searchKeyword,
+      );
+      query.$or = [
+        { name: { $regex: searchKeyword, $options: 'i' } },
+        { description: { $regex: searchKeyword, $options: 'i' } },
+      ];
+    }
+
+    // Get the total count of documents matching the query
+    const totalCount = await this.productModel.countDocuments(query);
+
+    // Retrieve paginated products
+    const products = await this.productModel
+      .find(query)
+      .sort({ [sortBy]: sortOrder })
+      .skip(skip)
+      .limit(pageSize);
+
+    const enhancedProducts = await this.convertProductWithCartAndWishlistStatus(
+      products,
+      profile_id,
+    );
+
+    return { products: enhancedProducts, totalCount };
+  }
+
+  async getProductsByMainCategoryForAdmin(
+    profile_id: string,
+    category_id: string,
+    country_code: string,
+    page: number = 1,
+    pageSize: number = 10,
+    sortBy: string = 'price',
+    sortOrder: 'asc' | 'desc' = 'desc',
+  ) {
+    const skip = (page - 1) * pageSize;
+  
+    const mainCategory = await this.mainCategoriesService.getSingleCategory(
+      category_id,
+    );
+  
+    if (!mainCategory) {
+      throw new NotFoundException('Main category not found.');
+    }
+  
+    const subCategoryIds = mainCategory.sub_categories.map(
+      (subCategory) => subCategory,
+    );
+  
+    const query: any = {
+      sub_category_id: { $in: subCategoryIds },
+    };
+  
+    if (country_code) {
+      query.country_codes = { $in: [country_code] };
+    }
+  
+    // Get the total count of documents matching the query
+    const totalCount = await this.productModel.countDocuments(query);
+  
+    const products = await this.productModel
+      .find(query)
+      .sort({ [sortBy]: sortOrder })
+      .skip(skip)
+      .limit(pageSize);
+  
+    const enhancedProducts = await this.convertProductWithCartAndWishlistStatus(
+      products,
+      profile_id,
+    );
+  
+    return { products: enhancedProducts, totalCount };
+  }
+  
+  async getProductsBySubCategoryForAdmin(
+    profile_id: string,
+    category_id: string,
+    country_code: string,
+    page: number = 1,
+    pageSize: number = 10,
+    sortBy: string = 'price',
+    sortOrder: 'asc' | 'desc' = 'desc',
+  ) {
+    const skip = (page - 1) * pageSize;
+  
+    const query: any = {
+      sub_category_id: category_id,
+    };
+  
+    if (country_code) {
+      query.country_codes = { $in: [country_code, 'all'] };
+    }
+  
+    // Get the total count of documents matching the query
+    const totalCount = await this.productModel.countDocuments(query);
+  
+    const products = await this.productModel
+      .find(query)
+      .sort({ [sortBy]: sortOrder })
+      .skip(skip)
+      .limit(pageSize);
+  
+    const enhancedProducts = await this.convertProductWithCartAndWishlistStatus(
+      products,
+      profile_id,
+    );
+  
+    return { products: enhancedProducts, totalCount };
+  }
+
+  async createMultipleProduct(file: Express.Multer.File, product_type: product_types) {
+    try {
+      const fileContent = fs.readFileSync(file.path, 'utf8');
+      const jsonData: CreateProductDto[] = JSON.parse(fileContent);
+
+      await this.addMultipleProducts(jsonData, product_type);
+
+      return { message: 'Products added successfully' };
+    } catch (error) {
+      console.error(error);
+      throw new HttpException('Failed to add products', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private async addMultipleProducts(jsonData: CreateProductDto[], product_type: product_types) {
+    const bulkOps = jsonData.map(data => ({
+      insertOne: {
+        document: {
+          ...data,
+          product_type,
+        },
+      },
+    }));
+
+    try {
+      const result = await this.productModel.bulkWrite(bulkOps);
+      console.log(result);
+    } catch (error) {
+      console.error(error);
+      throw new HttpException('Failed to add products', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }
