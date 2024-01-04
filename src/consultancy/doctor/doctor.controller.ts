@@ -34,14 +34,23 @@ export class DoctorController {
     @Query('page') page?: number,
     @Query('pageSize') pageSize?: number,
     @Query('gender') gender?: Gender,
-    @Query('experience') experience?: number,
+    @Query('today') today?: boolean,
+    @Query('anytime') anytime?: boolean,
+    @Query('tomorrow') tomorrow?: boolean,
+    @Query('exp_start') exp_start?: number,
+    @Query('exp_end') exp_end?: number,
   ) {
     return this.doctorService.getDoctor(
-      experience,
+      // experience,
       category_id,
       gender,
       page,
       pageSize,
+      today,
+      anytime,
+      tomorrow,
+      exp_start,
+      exp_end,
     );
   }
 
@@ -114,5 +123,24 @@ export class DoctorController {
     return this.doctorService.getTopDoctorsForAdmin(parsedPage, parsedPageSize);
   }
 
-  
+  @Get('admin/total-doctors')
+  getTotalDoctors(
+    @Query('search') search?: string,
+    @Query('gender') gender?: Gender,
+    @Query('categoryId') categoryId?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
+    @Query('page') page?: number,
+    @Query('limit') pageSize?: number,
+  ) {
+    return this.doctorService.getTotalDoctors(
+      search,
+      gender,
+      categoryId,
+      sortBy,
+      sortOrder,
+      page,
+      pageSize,
+    );
+  }
 }

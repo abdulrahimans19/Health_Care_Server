@@ -150,4 +150,91 @@ export class ProductController {
   deleteProduct(@Param('id') id: string) {
     return this.productService.deleteProduct(id);
   }
+
+  
+  @Get('/pharma-admin')
+  getPharmaAdminProducts(
+    @GetProfileId() profile_id: string,
+    @Query('page') page?: number,
+    @Query('pageSize') pageSize?: number,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    @Query('country_code') country_code?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.productService.getProductsForAdmin(
+      profile_id,
+      product_types.PHARMA,
+      country_code,
+      page,
+      pageSize,
+      sortBy || 'price',
+      sortOrder || 'asc',
+      search,
+    );
+  }
+
+  @Get('/food-admin')
+  getFoodAdminProducts(
+    @GetProfileId() profile_id: string,
+    @Query('page') page?: number,
+    @Query('pageSize') pageSize?: number,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    @Query('country_code') country_code?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.productService.getProductsForAdmin(
+      profile_id,
+      product_types.FOOD,
+      country_code,
+      page,
+      pageSize,
+      sortBy || 'price',
+      sortOrder || 'asc',
+      search,
+    );
+  }
+  
+  @Get('/admin/all-products/:category_id')
+  getAllProductsForAdmin(
+    @Param('category_id') category_id: string,
+    @GetProfileId() profile_id: string,
+    @Query('page') page?: number,
+    @Query('pageSize') pageSize?: number,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    @Query('country_code') country_code?: string,
+  ) {
+    return this.productService.getProductsByMainCategoryForAdmin(
+      profile_id,
+      category_id,
+      country_code,
+      page,
+      pageSize,
+      sortBy || 'price',
+      sortOrder || 'asc',
+    );
+  }
+
+  @Get('/admin/sub-category/:category_id')
+  getAllProductsBySubCategoryForAdmin(
+    @Param('category_id') category_id: string,
+    @GetProfileId() profile_id: string,
+    @Query('page') page?: number,
+    @Query('pageSize') pageSize?: number,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    @Query('country_code') country_code?: string,
+  ) {
+    return this.productService.getProductsBySubCategoryForAdmin(
+      profile_id,
+      category_id,
+      country_code,
+      page,
+      pageSize,
+      sortBy || 'price',
+      sortOrder || 'asc',
+    );
+  }
 }

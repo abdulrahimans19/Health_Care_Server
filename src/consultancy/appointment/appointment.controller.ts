@@ -29,9 +29,10 @@ export class AppointmentController {
   // @UseGuards(RoleGuard)
   getUserAppointment(
     @GetUser() user: JwtPayload,
+    @GetProfileId() profile_id: string,
     @Query('status') status: AppointmentStatus,
   ) {
-    return this.appointmentService.getUserAppointment({user_id:user.sub,status});
+    return this.appointmentService.getUserAppointment({user_id:user.sub,status,profile_id});
   }
 
   @Get('doctor-appointments')
@@ -39,5 +40,12 @@ export class AppointmentController {
   // @UseGuards(RoleGuard)
   getDoctorAppointment(@Body() userId: string) {
     return this.appointmentService.getDoctorAppointment(userId);
+  }
+
+  @Post('update-appointment-status')
+  // @Roles(UserRoles.ADMIN)
+  // @UseGuards(RoleGuard)
+  updateAppointmentStatus(@Body() dto: string) {
+    return this.appointmentService.updateAppointmentStatus(dto);
   }
 }

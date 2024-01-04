@@ -19,8 +19,8 @@ export class UserPostComments extends Document {
   @Prop({ default: 0 })
   total_likes: number;
 
-  @Prop({ default: [] })
-  people_liked: [];
+  @Prop({ default: new Map<string, boolean>() })
+  people_liked: Map<string, boolean>;
 
   @Prop({ default: Date.now(), index: true })
   created_at: Date;

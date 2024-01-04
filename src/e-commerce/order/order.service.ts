@@ -35,7 +35,38 @@ export class OrderService {
       .find({
         profile_id: new Types.ObjectId(profile_id),
         product_type,
-        order_status: payment_status,
+        // order_status: payment_status,
+      })
+      .populate({
+        path: 'product_id',
+        model: 'Product',
+      })
+      .populate({
+        path: 'address_id',
+        model: 'Address',
+      })
+      .populate({
+        path: 'review_id',
+        model: 'Review',
+      })
+      .skip(skip)
+      .limit(pageSize)
+      .sort({ created_at: -1 });
+
+    return { orders };
+  }
+
+  async getAllOrder(
+    product_type: product_types,
+    payment_status: string,
+    page: number = 1,
+    pageSize: number = 10,
+  ) {
+    const skip = (page - 1) * pageSize;
+    const orders = await this.orderModel
+      .find({
+        product_type,
+        // order_status: payment_status,
       })
       .populate({
         path: 'product_id',
@@ -181,6 +212,18 @@ export class OrderService {
         // Execute all order creation promises in parallel
         const orders = await Promise.all(orderPromises);
 
+        await this.cartModel.updateOne(
+          { profile_id },
+          {
+            $set: {
+              [product_type === product_types.PHARMA
+                ? 'pharma_products'
+                : 'food_products']: [],
+            },
+          },
+          { session } as { session: ClientSession },
+        );
+
         // Commit the transaction
         await session.commitTransaction();
         session.endSession();
@@ -249,6 +292,18 @@ export class OrderService {
         const discountAmount = 0;
         total_amount = total_amount - discountAmount;
 
+        await this.cartModel.updateOne(
+          { profile_id },
+          {
+            $set: {
+              [product_type === product_types.PHARMA
+                ? 'pharma_products'
+                : 'food_products']: [],
+            },
+          },
+          { session } as { session: ClientSession },
+        );
+
         // Commit the transaction
         await session.commitTransaction();
         session.endSession();
@@ -307,15 +362,15 @@ export class OrderService {
   ) {
     let payment_status: boolean = true;
 
-    if (dto.payment_mode === 'STRIPE') {
-      payment_status = await this.paymentService.validateStripeOrder(
-        dto.payment_id,
-      );
-    } else {
-      payment_status = await this.paymentService.validatePaypalPayment(
-        dto.payment_id,
-      );
-    }
+    // if (dto.payment_mode === 'STRIPE') {
+    //   payment_status = await this.paymentService.validateStripeOrder(
+    //     dto.payment_id,
+    //   );
+    // } else {
+    //   payment_status = await this.paymentService.validatePaypalPayment(
+    //     dto.payment_id,
+    //   );
+    // }
 
     if (payment_status) {
       // Update order status to SHIPPED

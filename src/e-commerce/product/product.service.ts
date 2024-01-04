@@ -143,6 +143,7 @@ export class ProductService {
     return { products: enhancedProducts };
   }
 
+
   async getSingleProduct(
     profile_id: string,
     productId: string,
@@ -276,4 +277,139 @@ export class ProductService {
 
     return enhancedProducts;
   }
+
+  async getProductsForAdmin(
+    profile_id: string,
+    productType: product_types,
+    country_code: string,
+    page: number = 1,
+    pageSize: number = 10,
+    sortBy: string = 'price',
+    sortOrder: 'asc' | 'desc' = 'desc',
+    searchKeyword?: string,
+  ): Promise<any> {
+    const skip = (page - 1) * pageSize;
+
+    const query: any = {
+      product_type: productType,
+    };
+
+    if (country_code) {
+      query.country_codes = { $in: [country_code, 'all'] };
+    }
+
+    if (searchKeyword) {
+      await this.recentSearchService.addToRecentSearch(
+        profile_id,
+        productType,
+        searchKeyword,
+      );
+      query.$or = [
+        { name: { $regex: searchKeyword, $options: 'i' } },
+        { description: { $regex: searchKeyword, $options: 'i' } },
+      ];
+    }
+
+    // Get the total count of documents matching the query
+    const totalCount = await this.productModel.countDocuments(query);
+
+    // Retrieve paginated products
+    const products = await this.productModel
+      .find(query)
+      .sort({ [sortBy]: sortOrder })
+      .skip(skip)
+      .limit(pageSize);
+
+    const enhancedProducts = await this.convertProductWithCartAndWishlistStatus(
+      products,
+      profile_id,
+    );
+
+    return { products: enhancedProducts, totalCount };
+  }
+
+  async getProductsByMainCategoryForAdmin(
+    profile_id: string,
+    category_id: string,
+    country_code: string,
+    page: number = 1,
+    pageSize: number = 10,
+    sortBy: string = 'price',
+    sortOrder: 'asc' | 'desc' = 'desc',
+  ) {
+    const skip = (page - 1) * pageSize;
+  
+    const mainCategory = await this.mainCategoriesService.getSingleCategory(
+      category_id,
+    );
+  
+    if (!mainCategory) {
+      throw new NotFoundException('Main category not found.');
+    }
+  
+    const subCategoryIds = mainCategory.sub_categories.map(
+      (subCategory) => subCategory,
+    );
+  
+    const query: any = {
+      sub_category_id: { $in: subCategoryIds },
+    };
+  
+    if (country_code) {
+      query.country_codes = { $in: [country_code] };
+    }
+  
+    // Get the total count of documents matching the query
+    const totalCount = await this.productModel.countDocuments(query);
+  
+    const products = await this.productModel
+      .find(query)
+      .sort({ [sortBy]: sortOrder })
+      .skip(skip)
+      .limit(pageSize);
+  
+    const enhancedProducts = await this.convertProductWithCartAndWishlistStatus(
+      products,
+      profile_id,
+    );
+  
+    return { products: enhancedProducts, totalCount };
+  }
+  
+  async getProductsBySubCategoryForAdmin(
+    profile_id: string,
+    category_id: string,
+    country_code: string,
+    page: number = 1,
+    pageSize: number = 10,
+    sortBy: string = 'price',
+    sortOrder: 'asc' | 'desc' = 'desc',
+  ) {
+    const skip = (page - 1) * pageSize;
+  
+    const query: any = {
+      sub_category_id: category_id,
+    };
+  
+    if (country_code) {
+      query.country_codes = { $in: [country_code, 'all'] };
+    }
+  
+    // Get the total count of documents matching the query
+    const totalCount = await this.productModel.countDocuments(query);
+  
+    const products = await this.productModel
+      .find(query)
+      .sort({ [sortBy]: sortOrder })
+      .skip(skip)
+      .limit(pageSize);
+  
+    const enhancedProducts = await this.convertProductWithCartAndWishlistStatus(
+      products,
+      profile_id,
+    );
+  
+    return { products: enhancedProducts, totalCount };
+  }
+  
 }

@@ -16,8 +16,9 @@ export class UserPost extends Document {
   @Prop({ default: 0 })
   total_liked: number;
 
-  @Prop({ default: [] })
-  people_liked: [];
+  @Prop({ default: new Map<string, boolean>() })
+  people_liked: Map<string, boolean>;
+  
 
   @Prop({ default: 0 })
   total_comments: number;

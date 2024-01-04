@@ -79,7 +79,7 @@ export class PostService {
           is_deleted: false,
         })
         .sort({ created_at: -1 })
-        .select({ people_liked: 0, profile_id: 0 });
+        // .select({ people_liked: 0 });
       return alluserPost;
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_GATEWAY);
@@ -88,28 +88,46 @@ export class PostService {
 
   async likeUserPost(profile_id, { post_id }) {
     try {
-      console.log(profile_id, post_id);
+      // const likedUser = await this.postModel.findOne({
+      //   _id: new mongoose.Types.ObjectId(post_id),
+      //   people_liked: new mongoose.Types.ObjectId(profile_id),
+      // });
+      // if (likedUser) {
+      //   throw new HttpException('already Liked', HttpStatus.BAD_GATEWAY);
+      // }
+      // console.log(likedUser);
 
-      const likedUser = await this.postModel.findOne({
-        _id: new mongoose.Types.ObjectId(post_id),
-        people_liked: new mongoose.Types.ObjectId(profile_id),
-      });
-      if (likedUser) {
-        throw new HttpException('already Liked', HttpStatus.BAD_GATEWAY);
+      // await this.postModel.findOneAndUpdate(
+      //   {
+      //     _id: post_id,
+      //   },
+      //   {
+      //     $push: { people_liked: new mongoose.Types.ObjectId(profile_id) },
+      //     $inc: { total_liked: 1 },
+      //   },
+      // );
+      const post = await this.postModel.findById(post_id);
+
+      const isLiked = post.people_liked.get(profile_id);
+      let val = '';
+      console.log(isLiked);
+      if (isLiked) {
+        post.people_liked.delete(profile_id);
+      } else {
+        val = 'liked';
+        post.people_liked.set(profile_id, true);
       }
-      console.log(likedUser);
 
-      await this.postModel.findOneAndUpdate(
+      const updatedPost = await this.postModel.findByIdAndUpdate(
+        post_id,
         {
-          _id: post_id,
+          $set: { people_liked: post.people_liked },
+          $inc: val === 'liked' ? { total_liked: 1 } : { total_liked: -1 },
         },
-        {
-          $push: { people_liked: new mongoose.Types.ObjectId(profile_id) },
-          $inc: { total_liked: 1 },
-        },
+        { new: true },
       );
 
-      return { message: 'post liked' };
+      return { message: 'Success' };
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_GATEWAY);
     }
@@ -147,7 +165,7 @@ export class PostService {
       throw new HttpException(error, HttpStatus.BAD_GATEWAY);
     }
   }
-  
+
   async getAllPosts(page) {
     try {
       const startIndex = (page.page - 1) * 10;
@@ -156,8 +174,7 @@ export class PostService {
         .find()
         .skip(startIndex)
         .limit(10)
-        .sort({ created_at: -1 })
-        .select('-profile_id -people_liked');
+        .sort({ created_at: -1 });
       return allPost;
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_GATEWAY);

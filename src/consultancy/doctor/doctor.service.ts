@@ -73,11 +73,16 @@ export class DoctorService {
   }
 
   async getDoctor(
-    experience?: number,
+    // experience?: number,
     categoryId?: string,
     gender?: Gender,
     page?: number,
     pageSize?: number,
+    today: boolean = false,
+    anytime: boolean = false,
+    tomorrow: boolean = false,
+    exp_start: number = 0,
+    exp_end: number = 100,
   ) {
     try {
       const query: any = {};
@@ -89,12 +94,14 @@ export class DoctorService {
       if (categoryId) {
         query.category_id = new mongoose.Types.ObjectId(categoryId);
       }
-
-      if (experience) {
-        query.experience = { $lte: experience };
+      if (exp_start && exp_end) {
+        // Both values are specified, include the range condition
+        query.experience = { $gte: exp_start, $lte: exp_end };
       }
 
       const skip = (page - 1) * pageSize;
+
+      console.log('query', query);
 
       const doctors = await this.doctorModel
         .find(query)
@@ -104,6 +111,9 @@ export class DoctorService {
         .exec();
 
       const today = new Date();
+      if (tomorrow) {
+        today.setDate(today.getDate() + 1);
+      }
       const formattedToday = `${
         today.getMonth() + 1
       }/${today.getDate()}/${today.getFullYear()}`;
@@ -151,10 +161,42 @@ export class DoctorService {
           },
         ],
       };
+      const today = new Date();
+      const formattedToday = `${
+        today.getMonth() + 1
+      }/${today.getDate()}/${today.getFullYear()}`;
       const getDoctorSearch = await this.doctorModel
         .find(searchQuery)
         .populate('availability');
-      return { getDoctorSearch };
+      console.log('getDoctorSearch', getDoctorSearch);
+      let data = getDoctorSearch.map(async (doctor: any) => {
+        let next_available_slot = '';
+        if (doctor.availability.length) {
+          console.log('availablity inside');
+          const appointment = doctor.availability.map(async (slot: any) => {
+            const slotPresent = await this.appointmentModel.findOne({
+              date: formattedToday,
+              doctorId: doctor._id,
+              slotId: (slot as any)._id,
+            });
+            console.log('slot', slot);
+            return {
+              _id: (slot as any)._id,
+              start_time: (slot as any).start_time,
+              end_time: (slot as any).end_time,
+              isBooked: slotPresent ? true : false,
+            };
+          });
+          const availability = await Promise.all(appointment);
+          return {
+            ...doctor._doc,
+            next_available_slot,
+            availability,
+          };
+        }
+      });
+      data = await Promise.all(data);
+      return data;
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
@@ -215,11 +257,11 @@ export class DoctorService {
         .skip(skip)
         .limit(pageSize)
         .exec();
+      console.log('doctorsByCategory', doctorsByCategory);
       const today = new Date();
       const formattedToday = `${
         today.getMonth() + 1
       }/${today.getDate()}/${today.getFullYear()}`;
-
       let data = doctorsByCategory.map(async (doctor: any) => {
         let next_available_slot = '';
         if (doctor.availability.length) {
@@ -561,6 +603,87 @@ export class DoctorService {
         },
       };
     } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async getTotalDoctors(
+    search: string,
+    gender: string,
+    category_id: string,
+    sortBy: string,
+    sortOrder: string,
+    page: number,
+    pageSize: number,
+  ) {
+    try {
+      const parsedSortOrder = sortOrder ? parseInt(sortOrder, 10) : undefined;
+      const matchCriteria = {};
+      if (search) {
+        matchCriteria['$or'] = [
+          { email: new RegExp(search, 'i') },
+          { name: new RegExp(search, 'i') },
+        ];
+      }
+
+      if (gender) {
+        matchCriteria['gender'] = gender;
+      }
+
+      if (category_id) {
+        matchCriteria['category_id'] = new mongoose.Types.ObjectId(category_id);
+      }
+
+      const sortCriteria = {};
+      if (sortBy) {
+        sortCriteria[sortBy] = parsedSortOrder ? 1 : -1;
+      }
+
+      if (isNaN(page)) {
+        page = 1;
+      }
+
+      if (isNaN(pageSize) || pageSize <= 0) {
+        pageSize = 10;
+      }
+
+      page = parseInt(page.toString(), 10);
+      pageSize = parseInt(pageSize.toString(), 10);
+
+      const aggregationPipeline = [
+        { $match: matchCriteria },
+        {
+          $facet: {
+            totalCount: [{ $count: 'value' }],
+            paginatedDoctors: [
+              {
+                $sort:
+                  Object.keys(sortCriteria).length > 0
+                    ? sortCriteria
+                    : { _id: 1 },
+              },
+              { $skip: (page - 1) * pageSize },
+              { $limit: pageSize },
+            ],
+          },
+        },
+      ];
+
+      const result = await this.doctorModel
+        .aggregate(aggregationPipeline)
+        .exec();
+
+      if (result.length > 0) {
+        const { totalCount, paginatedDoctors } = result[0];
+        return {
+          Doctors: paginatedDoctors,
+          totalCount: totalCount[0] ? totalCount[0].value : 0,
+        };
+      } else {
+        return { Doctors: [], totalCount: 0 };
+      }
+    } catch (error) {
+      console.log(error);
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
   }
