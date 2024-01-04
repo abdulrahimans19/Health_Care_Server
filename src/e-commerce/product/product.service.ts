@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Product } from './schema/product.schema';
@@ -8,6 +8,7 @@ import { FavouritesService } from '../favourites/favourites.service';
 import { CartService } from '../cart/cart.service';
 import { MainCategoriesService } from '../main-categories/main-categories.service';
 import { RecentSearchService } from '../recent-search/recent-search.service';
+import * as fs from 'fs';
 
 @Injectable()
 export class ProductService {
@@ -412,8 +413,22 @@ export class ProductService {
     return { products: enhancedProducts, totalCount };
   }
 
-  async createMultipleProduct(json:CreateProductDto[],product_type:product_types){
-    const bulkOps = json.map(data => ({
+  async createMultipleProduct(file: Express.Multer.File, product_type: product_types) {
+    try {
+      const fileContent = fs.readFileSync(file.path, 'utf8');
+      const jsonData: CreateProductDto[] = JSON.parse(fileContent);
+
+      await this.addMultipleProducts(jsonData, product_type);
+
+      return { message: 'Products added successfully' };
+    } catch (error) {
+      console.error(error);
+      throw new HttpException('Failed to add products', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private async addMultipleProducts(jsonData: CreateProductDto[], product_type: product_types) {
+    const bulkOps = jsonData.map(data => ({
       insertOne: {
         document: {
           ...data,
@@ -425,10 +440,9 @@ export class ProductService {
     try {
       const result = await this.productModel.bulkWrite(bulkOps);
       console.log(result);
-      return { message: 'Products added successfully' };
     } catch (error) {
       console.error(error);
-      throw new Error('Failed to add products');
+      throw new HttpException('Failed to add products', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

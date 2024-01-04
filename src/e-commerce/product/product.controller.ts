@@ -7,7 +7,9 @@ import {
   Post,
   Put,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto, UpdateProductDto } from './dto';
@@ -16,6 +18,8 @@ import { Roles } from 'src/shared/decorators';
 import { UserRoles } from 'src/user/schema/user.schema';
 import { RoleGuard } from 'src/shared/guards';
 import { GetProfileId } from 'src/shared/decorators/get-profile-id.decorator';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 
 @Controller('product')
 export class ProductController {
@@ -126,9 +130,10 @@ export class ProductController {
   @Post('/pharma/create/multiple')
   @Roles(UserRoles.ADMIN)
   @UseGuards(RoleGuard)
-  createMultipleProduct(@Body() dto) {
+  @UseInterceptors(FileInterceptor('file', { storage: diskStorage({}) }))
+  createMultiplePharmaProduct(@Body() dto, @UploadedFile() file) {
     return this.productService.createMultipleProduct(
-      dto.json,
+      file,
       product_types.PHARMA,
     );
   }
@@ -143,11 +148,9 @@ export class ProductController {
   @Post('/food/create/multiple')
   @Roles(UserRoles.ADMIN)
   @UseGuards(RoleGuard)
-  createMultipleFoodProduct(@Body() dto) {
-    return this.productService.createMultipleProduct(
-      dto.json,
-      product_types.FOOD,
-    );
+  @UseInterceptors(FileInterceptor('file', { storage: diskStorage({}) }))
+  createMultipleFoodProduct(@Body() dto, @UploadedFile() file) {
+    return this.productService.createMultipleProduct(file, product_types.FOOD);
   }
 
   @Put('/pharma/update')
