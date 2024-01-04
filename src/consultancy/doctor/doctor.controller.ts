@@ -19,9 +19,7 @@ import { DoctorUpdateDto } from './dto/doctor-update.dto';
 
 @Controller('doctor')
 export class DoctorController {
-  constructor(
-    private readonly doctorService: DoctorService,
-  ) { }
+  constructor(private readonly doctorService: DoctorService) {}
 
   @Post('add-doctor')
   @Roles(UserRoles.ADMIN)
@@ -52,7 +50,7 @@ export class DoctorController {
       anytime,
       tomorrow,
       exp_start,
-      exp_end
+      exp_end,
     );
   }
 
@@ -65,10 +63,7 @@ export class DoctorController {
   }
 
   @Post('get-doctor-details/:doctorId')
-  getDoctorDetails(
-    @Param('doctorId') doctorId: string,
-    @Body() dto: any
-  ) {
+  getDoctorDetails(@Param('doctorId') doctorId: string, @Body() dto: any) {
     return this.doctorService.getDoctorDetails(doctorId, dto);
   }
 
@@ -96,16 +91,15 @@ export class DoctorController {
   }
 
   @Post('update-doctor')
-  updateDoctor(@GetUser() user: JwtPayload, @Body() updateData: DoctorUpdateDto){
-    return this.doctorService.updateDoctor(user, updateData) 
-  }
-  
-  @Post('add-slots/:doctorId')
-  addDoctorSlots(
-    @Body() dto: any,
-    @Param('doctorId') doctorId: string,
+  updateDoctor(
+    @GetUser() user: JwtPayload,
+    @Body() updateData: DoctorUpdateDto,
   ) {
-    return this.doctorService.addDoctorSlots(doctorId, dto);
+    return this.doctorService.updateDoctor(user, updateData);
   }
 
+  @Post('add-slots/:doctorId')
+  addDoctorSlots(@Body() dto: any, @Param('doctorId') doctorId: string) {
+    return this.doctorService.addDoctorSlots(doctorId, dto);
+  }
 }

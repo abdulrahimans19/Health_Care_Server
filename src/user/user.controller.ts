@@ -13,7 +13,12 @@ export class UserController {
   }
 
   @Get('/get-user-count')
-  getUserCount(@Query('startDate')startDate,@Query('endDate')endDate){
-    return this.userService.getUserCount(startDate,endDate)
+  getUserCount() {
+    return this.userService.getUserCount();
+  }
+
+  @Get('/user-list')
+  async getUsersForAdmin(@Query() dto: any): Promise<any> {
+    return this.userService.getUsersForAdmin(dto);
   }
 }
