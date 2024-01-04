@@ -687,4 +687,13 @@ export class DoctorService {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
   }
+
+  async getDoctorProfile(dto: any) {
+    try {
+      const doctor=await this.doctorModel.findById(dto.sub);
+      return doctor;
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
+  }
 }

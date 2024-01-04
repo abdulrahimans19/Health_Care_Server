@@ -143,4 +143,14 @@ export class DoctorController {
       pageSize,
     );
   }
+
+  @Get('doctor-profile')
+  // @Roles(UserRoles.ADMIN)
+  // @UseGuards(RoleGuard)
+  getDoctorAppointment(
+    @GetUser() user: JwtPayload,
+    ) {
+    return this.doctorService.getDoctorProfile(user);
+  }
 }
+
